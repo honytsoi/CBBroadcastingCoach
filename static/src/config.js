@@ -80,6 +80,7 @@ function toggleConfig() {
 }
 
 // Test backend API connection
+// The test button is working
 async function testApiConnection() {
     // Initialize UI elements
     apiTestResult = document.getElementById('apiTestResult');
