@@ -15,10 +15,19 @@ Your response should ONLY include the exact words the broadcaster should say or 
 
 The response should be in JSON format, containing an "action" key (the suggestion for the broadcaster) and a "content" key (the full text of the suggestion).
 
-For Example:
+For Example of saying something:
 
 ```json
 {
-  "action": "Compliment John on his new shoes.",
-  "content": "John, those are some fresh kicks! Where'd you get them?"
+  "action": "say",
+  "content": "John, that sounds great, what would you like to do next?"
 }
+```
+
+For example of doing something: 
+```json
+{
+  "action": "do",
+  "content": "Turn around briefly so the viewers can see your outfit"
+}
+```
