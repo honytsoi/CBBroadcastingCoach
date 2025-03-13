@@ -1,0 +1,70 @@
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+.pids
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Dependency directories
+node_modules/
+.jspm/
+
+# Build artifacts
+dist/
+build/
+out/
+coverage/
+
+# Editor and IDE-specific files
+.vscode/
+!.vscode/settings.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Testing-related files
+vitest.config.ts
+vitest.setup.ts
+
+# Cloudflare Workers-specific files
+wrangler.toml
+wrangler.jsonc
+*.wrangler.*
+
+# API keys or secrets (if accidentally added)
+api-keys.json
+secrets.json
+
+# Miniflare cache
+.miniflare/
+.cache/
+
+# Optional: Ignore local development files
+*.dev.js
+*.local.js
+
+# Optional: Ignore generated files
+*.generated.*
+
+# Ignore Wrangler's local cache and metadata
+.wrangler/
