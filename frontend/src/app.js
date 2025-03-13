@@ -1,7 +1,7 @@
 // Main Application for Broadcasting Real-Time Coach
 import { initConfig, configState } from './config.js';
 import { initQRScanner } from './qr-scanner.js';
-import { generateCoachingPrompt } from './api/openrouter.js';
+import { cloudflareWorker } from './api/cloudflareWorker';
 
 // App State
 const appState = {
