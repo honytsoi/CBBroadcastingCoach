@@ -1,7 +1,7 @@
-// Main Application for Broadcasting Real-Time Coach
+// src/app.js
 import { initConfig, configState } from './config.js';
 import { initQRScanner } from './qr-scanner.js';
-import { cloudflareWorker } from './api/cloudflareWorker';
+import * as CloudflareWorkerAPI from './api/cloudflareWorker.js';
 
 // App State
 const appState = {
@@ -227,7 +227,8 @@ function processEvent(message) {
         : configState.config.promptDelay + 1;
             
     if (timeSinceLastPrompt > configState.config.promptDelay) {
-        generateCoachingPrompt(configState.config, appState.context, addPromptItem);
+        // Changed reference to CloudflareWorkerAPI.generateCoachingPrompt
+        CloudflareWorkerAPI.default.generateCoachingPrompt(configState.config, appState.context, addPromptItem);
     }
 }
 

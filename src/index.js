@@ -80,6 +80,11 @@ function simpleHash(input) {
   export default {
 	async fetch(request, env) {
 	  console.log('Request received:', request.url);
+      
+      // For non-POST requests, fallback to static assets
+      if (request.method !== 'POST') {
+        return env.ASSETS.fetch(request);
+      }
   
 	  const url = new URL(request.url);
   

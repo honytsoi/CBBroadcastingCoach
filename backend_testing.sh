@@ -14,7 +14,7 @@ ENV="live"  # Change to "dev" for local testing
 if [ "$ENV" == "dev" ]; then
   BASE_URL="http://localhost:8787"
 else
-  BASE_URL="https://apibackend.adult-webcam-faq.com"
+  BASE_URL="https://broadcasting-coach.adult-webcam-faq.com"
 fi
 
 echo "Testing backend on $BASE_URL..."

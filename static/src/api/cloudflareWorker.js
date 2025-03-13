@@ -1,6 +1,5 @@
-// cloudflareWorker.js - Communicates with our custom Cloudflare Worker backend
-
-const AI_API_ENDPOINT = 'https://apibackend.adult-webcam-faq.com/api/generate-prompt'; // Update this for production if necessary
+// src/api/cloudflareWorker.js
+const AI_API_ENDPOINT = '/api/generate-prompt'; // Relative URL!
 
 let aiState = {
     isGeneratingPrompt: false,
