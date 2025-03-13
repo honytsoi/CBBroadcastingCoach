@@ -1,74 +1,52 @@
-/**
- * 
- * 
-Request body:
-```json
-{
-  "context": [
-    {
-      "text": "User123: Hello everyone!",
-      "type": "chat",
-      "timestamp": "2025-03-13T03:15:45.000Z"
-    },
-    {
-      "text": "User456 tipped 50 tokens",
-      "type": "tip",
-      "timestamp": "2025-03-13T03:16:12.000Z"
-    }
-  ],
-  "broadcaster": "BroadcasterName",
-  "preferences": "Optional preferences or restrictions"
-}
-```
+// Import the prompt template as a string
+import promptTemplate from './promptTemplate.txt';
 
- */
 export default {
 	async fetch(request, env) {
-	  const url = new URL(request.url);
+	  console.log('Request received:', request.url);
   
-	  // Handle only POST requests to /api/generate-prompt
+	  const url = new URL(request.url);
 	  if (url.pathname === '/api/generate-prompt' && request.method === 'POST') {
 		try {
-		  // Parse the incoming request body
+		  console.log('Parsing request body...');
 		  const requestBody = await request.json();
-		  const { context } = requestBody;
+		  console.log('Parsed request body:', requestBody);
+  
+		  const { context, broadcaster, preferences, aimodel } = requestBody;
   
 		  // Validate the request body
 		  if (!Array.isArray(context) || context.length === 0) {
+			console.error('Invalid or missing context');
 			return new Response(JSON.stringify({ error: 'Invalid or missing context' }), {
 			  status: 400,
 			  headers: { 'Content-Type': 'application/json' },
 			});
 		  }
   
-		  // Prepare the context for the AI model
+		  console.log('Preparing prompt template...');
+		  const model = aimodel || '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+		  console.log('Using AI model:', model);
+  
 		  const formattedContext = context
-			.map(item => `${item.type}: ${item.text}`)
+			.map(item => `${item.type}: ${item.text} (${new Date(item.timestamp).toLocaleString()})`)
 			.join('\n');
   
-		  // Define the hardcoded prompt template
-		  const promptTemplate = `
-			Given the following chatroom activity:
-			${formattedContext}
+		  console.log('Formatted context:', formattedContext);
   
-			Provide a suggestion for the broadcaster in JSON format:
-			{
-			  "action": "say" or "do",
-			  "content": "What to say or do"
-			}
-		  `;
+		  const finalPrompt = promptTemplate
+			.replace('{{context}}', formattedContext)
+			.replace('{{broadcaster}}', broadcaster || 'Unknown Broadcaster')
+			.replace('{{preferences}}', preferences || 'No preferences specified');
   
-		  // Run inference using the first AI model
-		  const aiResponseLlama = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
-			prompt: promptTemplate,
+		  console.log('Final prompt:', finalPrompt);
+  
+		  console.log('Running AI inference...');
+		  const aiResponse = await env.AI.run(model, {
+			prompt: finalPrompt,
 		  });
   
-		  // Run inference using the second AI model
-		  const aiResponseMistral = await env.AI.run("@hf/mistral/mistral-7b-instruct-v0.2", {
-			prompt: promptTemplate,
-		  });
+		  console.log('AI response:', aiResponse);
   
-		  // Parse and structure the AI responses
 		  const parseResponse = (response) => {
 			try {
 			  const parsed = JSON.parse(response.response);
@@ -77,6 +55,7 @@ export default {
 				content: parsed.content || 'No suggestion available.',
 			  };
 			} catch (error) {
+			  console.error('Error parsing AI response:', error);
 			  return {
 				action: 'unknown',
 				content: 'Error parsing AI response.',
@@ -84,18 +63,14 @@ export default {
 			}
 		  };
   
-		  const structuredResponse = {
-			llama: parseResponse(aiResponseLlama),
-			mistral: parseResponse(aiResponseMistral),
-		  };
+		  const structuredResponse = parseResponse(aiResponse);
+		  console.log('Structured response:', structuredResponse);
   
-		  // Return the structured response
 		  return new Response(JSON.stringify(structuredResponse), {
 			headers: { 'Content-Type': 'application/json' },
 		  });
-  
 		} catch (error) {
-		  // Handle errors gracefully
+		  console.error('Error in /api/generate-prompt:', error.message);
 		  return new Response(JSON.stringify({ error: error.message }), {
 			status: 500,
 			headers: { 'Content-Type': 'application/json' },
@@ -103,7 +78,6 @@ export default {
 		}
 	  }
   
-	  // Default response for unsupported routes/methods
 	  return new Response('Not Found', { status: 404 });
 	},
   };

@@ -2,18 +2,9 @@
 
 This document provides information about the planned backend implementation for the CB Broadcasting Real-Time Coach application.
 
-## Current Status
+## In progress Backend Implementation
 
-Currently, the application does not have a backend server. All processing happens in the browser, with external API calls made directly from the client to the OpenRouter API. This requires users to:
-
-1. Create an account on OpenRouter
-2. Generate their own API key
-3. Enter the API key in the application settings
-4. Pay for their own API usage
-
-## Planned Backend Implementation
-
-The planned backend will use Cloudflare Workers and Cloudflare AI to eliminate the need for users to provide their own OpenRouter API key.
+The  backend will use Cloudflare Workers and Cloudflare AI to eliminate the need for users to provide their own OpenRouter API key.
 
 ### Architecture
 
@@ -37,10 +28,10 @@ graph TD
 
 ### Implementation Plan
 
-1. **Create a Cloudflare Worker**: Develop a serverless function that will handle requests from the frontend
-2. **Integrate with Cloudflare AI**: Use Cloudflare's AI models to generate coaching prompts
-3. **Implement Authentication**: Add basic authentication to prevent abuse
-4. **Update Frontend**: Modify the frontend to use the new backend API instead of OpenRouter
+1. **Create a Cloudflare Worker**: Develop a serverless function that will handle requests from the frontend   DONE
+2. **Integrate with Cloudflare AI**: Use Cloudflare's AI models to generate coaching prompts  DONE
+3. **Implement Authentication**: Add basic authentication to prevent abuse  TODO
+4. **Update Frontend**: Modify the frontend to use the new backend API instead of OpenRouter  TODO
 
 ### API Endpoints
 
@@ -52,32 +43,32 @@ The backend will provide the following API endpoint:
 POST /api/generate-prompt
 ```
 
-Request body:
-```json
-{
-  "context": [
-    {
-      "text": "User123: Hello everyone!",
-      "type": "chat",
-      "timestamp": "2025-03-13T03:15:45.000Z"
-    },
-    {
-      "text": "User456 tipped 50 tokens",
-      "type": "tip",
-      "timestamp": "2025-03-13T03:16:12.000Z"
-    }
-  ],
-  "broadcaster": "BroadcasterName",
-  "preferences": "Optional preferences or restrictions",
-  "aimodel": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
-}
+Example request using curl to show how it works:
+```curl
+curl -X POST http://localhost:8787/api/generate-prompt      -H "Content-Type: application/json"      -d '{
+       "context": [
+         {
+           "text": "User123: Hello everyone!",
+           "type": "chat",
+           "timestamp": "2025-03-13T03:15:45.000Z"
+         },
+         {
+           "text": "User456 tipped 50 tokens",
+           "type": "tip",
+           "timestamp": "2025-03-13T03:16:12.000Z"
+         }
+       ],
+       "broadcaster": "BroadcasterName",
+       "preferences": "Engage more with tips.",
+       "aimodel": "@hf/mistral/mistral-7b-instruct-v0.2"
+     }'
 ```
 
 Response body:
 ```json
 {
-  "prompt": "Thank User456 for the generous tip and ask what brought them to your stream today.",
-  "model": "Cloudflare AI @cf/meta/llama-3-70b-instruct"
+  "action": "say",
+  "content": "Hello User123 and thank you for joining us today! I'm glad to see User456 has shown their appreciation for the stream with a tip of 50 tokens. It's wonderful to have such a supportive community here. Let's continue the stream with some engaging and interactive content!"
 }
 ```
 
@@ -107,9 +98,7 @@ backend/
 ├── package.json        # Node.js package configuration
 └── src/
     ├── index.js        # Main Worker entry point
-    ├── ai.js           # Cloudflare AI integration
-    └── middleware/
-        └── auth.js     # Authentication middleware
+
 ```
 
 ### Security Considerations

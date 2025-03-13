@@ -1,0 +1,11 @@
+Given the following chatroom activity:
+{{context}}
+
+Broadcaster: {{broadcaster}}
+Preferences: {{preferences}}
+
+Provide a suggestion for the broadcaster in JSON format:
+{
+  "action": "say" or "do",
+  "content": "What to say or do"
+}
