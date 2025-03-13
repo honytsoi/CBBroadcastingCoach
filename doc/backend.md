@@ -68,7 +68,8 @@ Request body:
     }
   ],
   "broadcaster": "BroadcasterName",
-  "preferences": "Optional preferences or restrictions"
+  "preferences": "Optional preferences or restrictions",
+  "aimodel": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 }
 ```
 

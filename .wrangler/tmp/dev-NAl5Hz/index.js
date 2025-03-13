@@ -5,26 +5,52 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 var src_default = {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const pathname = url.pathname;
-    if (pathname === "/api/generate-prompt") {
-      const requestBody = await request.json();
-      const { context } = requestBody;
-      const formattedContext = context.map((item) => `${item.type}: ${item.text}`).join("\n");
-      const prompt = `Given the following chat history:
-${formattedContext}
-
-What should the broadcaster say or do next?`;
+    if (url.pathname === "/api/generate-prompt" && request.method === "POST") {
       try {
-        const responseLlama = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
-          prompt
+        const requestBody = await request.json();
+        const { context } = requestBody;
+        if (!Array.isArray(context) || context.length === 0) {
+          return new Response(JSON.stringify({ error: "Invalid or missing context" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        const formattedContext = context.map((item) => `${item.type}: ${item.text}`).join("\n");
+        const promptTemplate = `
+			Given the following chatroom activity:
+			${formattedContext}
+  
+			Provide a suggestion for the broadcaster in JSON format:
+			{
+			  "action": "say" or "do",
+			  "content": "What to say or do"
+			}
+		  `;
+        const aiResponseLlama = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
+          prompt: promptTemplate
         });
-        const responseMistral = await env.AI.run("@hf/mistral/mistral-7b-instruct-v0.2", {
-          prompt
+        const aiResponseMistral = await env.AI.run("@hf/mistral/mistral-7b-instruct-v0.2", {
+          prompt: promptTemplate
         });
-        return new Response(JSON.stringify({
-          llamaResponse: responseLlama.response,
-          mistralResponse: responseMistral.response
-        }), {
+        const parseResponse = /* @__PURE__ */ __name((response) => {
+          try {
+            const parsed = JSON.parse(response.response);
+            return {
+              action: parsed.action || "unknown",
+              content: parsed.content || "No suggestion available."
+            };
+          } catch (error) {
+            return {
+              action: "unknown",
+              content: "Error parsing AI response."
+            };
+          }
+        }, "parseResponse");
+        const structuredResponse = {
+          llama: parseResponse(aiResponseLlama),
+          mistral: parseResponse(aiResponseMistral)
+        };
+        return new Response(JSON.stringify(structuredResponse), {
           headers: { "Content-Type": "application/json" }
         });
       } catch (error) {
