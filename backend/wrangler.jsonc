@@ -10,9 +10,6 @@
 	"ai": {
 		"binding": "AI"
 	},
-	"text_blobs": {
-		"promptTemplate": "./src/promptTemplate.txt"
-	},
 	"observability": {
 		"enabled": true
 	}
