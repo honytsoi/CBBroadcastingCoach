@@ -47,8 +47,6 @@ vitest.config.ts
 vitest.setup.ts
 
 # Cloudflare Workers-specific files
-wrangler.toml
-wrangler.jsonc
 *.wrangler.*
 
 # API keys or secrets (if accidentally added)
