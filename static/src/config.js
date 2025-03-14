@@ -9,7 +9,8 @@ const configState = {
         promptLanguage: 'en-US',
         promptDelay: 5,
         preferences: '',
-        sessionKey: null
+        sessionKey: null,
+        scannedUrl: '' // New field to store scanned QR code URL
     }
 };
 
@@ -63,6 +64,7 @@ function loadConfig() {
             
             // Populate form fields
             document.getElementById('aiModel').value = configState.config.aiModel || 'anthropic/claude-instant-v1';
+            document.getElementById('scannedUrl').value = configState.config.scannedUrl || '';
             document.getElementById('broadcasterName').value = configState.config.broadcasterName || '';
             document.getElementById('promptLanguage').value = configState.config.promptLanguage || 'en-US';
             document.getElementById('promptDelay').value = configState.config.promptDelay || 5;
@@ -79,6 +81,7 @@ function loadConfig() {
 // Save configuration to localStorage
 async function saveConfig() {
     configState.config.aiModel = document.getElementById('aiModel').value;
+    configState.config.scannedUrl = document.getElementById('scannedUrl').value;
     configState.config.broadcasterName = document.getElementById('broadcasterName').value;
     configState.config.promptLanguage = document.getElementById('promptLanguage').value;
     configState.config.promptDelay = parseInt(document.getElementById('promptDelay').value) || 5;

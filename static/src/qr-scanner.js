@@ -1,4 +1,5 @@
 // QR Scanner Module for Broadcasting Real-Time Coach
+import { configState } from './config.js';
 
 // State related to QR scanning
 const scannerState = {
@@ -107,6 +108,33 @@ function scanForQRCode(onQRCodeDetected) {
 
 // Display QR code scan result
 function displayQRCodeResult(url) {
+    // Store URL in config
+    configState.config.scannedUrl = url;
+    
+    // Parse broadcaster name from URL
+    // Format: https://eventsapi.chaturbate.com/events/username/token/
+    const urlParts = url.split('/');
+    if (urlParts.length >= 5) {
+        const username = urlParts[4]; // Get the part after 'events'
+        configState.config.broadcasterName = username;
+        
+        // Save the updated configuration
+        localStorage.setItem('chatCoachConfig', JSON.stringify(configState.config));
+        window.addActivityItem(`Broadcaster username set to: ${username}`, 'event');
+        
+        // Update UI elements
+        const broadcasterNameInput = document.getElementById('broadcasterName');
+        if (broadcasterNameInput) {
+            broadcasterNameInput.value = username;
+        }
+        
+        const scannedUrlInput = document.getElementById('scannedUrl');
+        if (scannedUrlInput) {
+            scannedUrlInput.value = url;
+        }
+    }
+    
+    // Show scan result
     apiEndpointEl.textContent = url;
     scanResult.classList.remove('hidden');
 }
