@@ -17,7 +17,8 @@ Broadcasting Real-Time Coach is a single-page web application that helps broadca
 ## Requirements
 
 - A modern web browser (Chrome, Firefox, Safari, Edge)
-- An OpenRouter API key for AI functionality
+~~- An OpenRouter API key for AI functionality~~
+- Uses Cloudflare Worker AI
 - A Chaturbate account with access to the Events API
 - A device with a camera for QR code scanning (typically a smartphone)
 - Headphones or earbuds for private audio prompts
@@ -26,9 +27,10 @@ Broadcasting Real-Time Coach is a single-page web application that helps broadca
 
 1. Open the application in your web browser
 2. Click the "Settings" button (⚙️) to configure the app:
-   - Enter your OpenRouter API key
+   ~~- Enter your OpenRouter API key~~
    - Select your preferred AI model
-   - Enter your Chaturbate username
+   ~~- Enter your Chaturbate username~~
+   - Your CB username is picked up from the QR Code
    - Choose your preferred language for audio prompts
    - Set the delay between prompts (in seconds)
    - Add any preferences or topics to avoid
@@ -39,8 +41,8 @@ Broadcasting Real-Time Coach is a single-page web application that helps broadca
 
 ## Privacy & Security
 
-- Your API keys and preferences are stored locally in your browser
-- No data is sent to any server except the Chaturbate API and OpenRouter API
+- Your ~~API keys and~~ preferences are stored locally in your browser
+- No data is sent to any server except the Chaturbate API and ~~OpenRouter~~ CloudFlare API
 - The app does not record or store your broadcasts
 
 ## Technical Details
@@ -48,7 +50,7 @@ Broadcasting Real-Time Coach is a single-page web application that helps broadca
 - Built with HTML, CSS, and JavaScript
 - Uses jsQR for QR code scanning
 - Connects to Chaturbate's Events API using Server-Sent Events (SSE)
-- Uses OpenRouter API for AI-generated coaching prompts
+- Uses ~~OpenRouter~~ CloudFlare API for AI-generated coaching prompts
 - Implements Web Speech API for text-to-speech functionality
 
 ## Usage Tips
@@ -63,8 +65,3 @@ Broadcasting Real-Time Coach is a single-page web application that helps broadca
 - If the QR code scanner doesn't work, ensure you've granted camera permissions to the app
 - If you're not receiving audio prompts, check that your device's volume is turned up and audio is enabled in the app
 - If the connection to the Events API fails, try refreshing the page and scanning the QR code again
-
-## License
-
-This project is open source and available under the MIT License.
-#
