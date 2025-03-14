@@ -2,6 +2,7 @@
 import { initConfig, configState } from './config.js';
 import { initQRScanner } from './qr-scanner.js';
 import * as CloudflareWorkerAPI from './api/cloudflareWorker.js';
+import UserManager from './user-manager.js';
 
 // App State
 const appState = {
@@ -10,7 +11,8 @@ const appState = {
     lastEventId: null,
     context: [],
     lastPromptTimestamp: null,
-    broadcasterInfo: null
+    broadcasterInfo: null,
+    userManager: new UserManager()
 };
 
 // DOM Elements
@@ -20,6 +22,8 @@ let promptFeed;
 let audioEnabled;
 let connectionStatus;
 let lastPromptTime;
+let usersSection;
+let userList;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -40,6 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Make addActivityItem available globally for other modules
     window.addActivityItem = addActivityItem;
+    
+    // Setup users section
+    setupUsersSection();
     
     // Check if we have a saved scanned URL and connect automatically
     setTimeout(() => {
@@ -187,18 +194,43 @@ function processEvent(message) {
     } else if (method === "userEnter") {
         const username = object.user.username || 'Anonymous';
         addActivityItem(`${username} entered the room`, 'event');
+        
+        // Track user in user manager
+        if (username !== 'Anonymous') {
+            appState.userManager.addUser(username);
+            appState.userManager.markUserOnline(username);
+            updateUsersUI();
+        }
     } else if (method === "userLeave") {
         const username = object.user.username || 'Anonymous';
         addActivityItem(`${username} left the room`, 'event');
+        
+        // Update user status
+        if (username !== 'Anonymous') {
+            appState.userManager.markUserOffline(username);
+            updateUsersUI();
+        }
     } else if (method === "follow") {
         const username = object.user.username || 'Anonymous';
         addActivityItem(`${username} has followed`, 'event');
+        
+        // Track user activity
+        if (username !== 'Anonymous') {
+            appState.userManager.addUser(username);
+            updateUsersUI();
+        }
     } else if (method === "unfollow") {
         const username = object.user.username || 'Anonymous';
         addActivityItem(`${username} has unfollowed`, 'event');
     } else if (method === "fanclubJoin") {
         const username = object.user.username || 'Anonymous';
         addActivityItem(`${username} joined the fan club`, 'event');
+        
+        // Track user activity
+        if (username !== 'Anonymous') {
+            appState.userManager.addUser(username);
+            updateUsersUI();
+        }
     } else if (method === "chatMessage") {
         const username = object.user.username || 'Anonymous';
         const messageText = object.message.message || '';
@@ -208,12 +240,26 @@ function processEvent(message) {
             addActivityItem(`You: ${messageText}`, 'chat');
         } else {
             addActivityItem(`${username}: ${messageText}`, 'chat');
+            
+            // Track user message
+            if (username !== 'Anonymous') {
+                appState.userManager.addUser(username);
+                appState.userManager.addUserMessage(username, messageText);
+                updateUsersUI();
+            }
         }
     } else if (method === "privateMessage") {
         const fromUser = object.message.fromUser || 'Anonymous';
         const toUser = object.message.toUser || 'Anonymous';
         const messageText = object.message.message || '';
         addActivityItem(`${fromUser} sent private message to ${toUser}: ${messageText}`, 'chat');
+        
+        // Track private message
+        if (fromUser !== 'Anonymous') {
+            appState.userManager.addUser(fromUser);
+            appState.userManager.addUserMessage(fromUser, messageText);
+            updateUsersUI();
+        }
     } else if (method === "tip") {
         const username = object.user.username || 'Anonymous';
         const tokens = object.tip.tokens || 0;
@@ -226,6 +272,13 @@ function processEvent(message) {
         }
         
         addActivityItem(tipText, 'tip');
+        
+        // Track user tip
+        if (!isAnon && username !== 'Anonymous') {
+            appState.userManager.addUser(username);
+            appState.userManager.recordUserTip(username, tokens);
+            updateUsersUI();
+        }
     } else if (method === "roomSubjectChange") {
         const subject = object.subject || '';
         addActivityItem(`Room Subject changed to ${subject}`, 'event');
@@ -234,6 +287,12 @@ function processEvent(message) {
         const mediaType = object.media.type || '';
         const mediaName = object.media.name || '';
         addActivityItem(`${username} purchased ${mediaType} set: ${mediaName}`, 'event');
+        
+        // Track user purchase
+        if (username !== 'Anonymous') {
+            appState.userManager.addUser(username);
+            updateUsersUI();
+        }
     } else {
         addActivityItem(`Event: ${method}`, 'event');
     }
@@ -250,6 +309,255 @@ function processEvent(message) {
     }
 }
 
+// Setup the users section in the UI
+function setupUsersSection() {
+    // Create users section if it doesn't exist
+    if (!document.getElementById('usersSection')) {
+        // Create elements
+        usersSection = document.createElement('div');
+        usersSection.id = 'usersSection';
+        usersSection.className = 'section';
+        
+        const usersHeader = document.createElement('h2');
+        usersHeader.textContent = 'Users';
+        
+        userList = document.createElement('div');
+        userList.id = 'userList';
+        userList.className = 'user-list';
+        
+        // Assemble the section
+        usersSection.appendChild(usersHeader);
+        usersSection.appendChild(userList);
+        
+        // Add to the UI after the prompt section
+        const promptSection = document.querySelector('.prompt-section');
+        if (promptSection) {
+            promptSection.parentNode.insertBefore(usersSection, promptSection.nextSibling);
+        } else {
+            // Fallback - add to main content
+            document.querySelector('.main-content').appendChild(usersSection);
+        }
+        
+        // Add styles if needed
+        addUsersSectionStyles();
+    }
+    
+    // Initial UI update
+    updateUsersUI();
+}
+
+// Add necessary styles for users section
+function addUsersSectionStyles() {
+    // Check if styles already exist
+    if (!document.getElementById('userSectionStyles')) {
+        const styleSheet = document.createElement('style');
+        styleSheet.id = 'userSectionStyles';
+        styleSheet.textContent = `
+            #usersSection {
+                margin: 15px 0;
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                padding: 15px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+            
+            .user-list {
+                max-height: 300px;
+                overflow-y: auto;
+            }
+            
+            .user-item {
+                margin-bottom: 8px;
+                border: 1px solid #e0e0e0;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+            
+            .user-summary {
+                padding: 8px 12px;
+                background-color: #f0f0f0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                cursor: pointer;
+            }
+            
+            .user-summary.online {
+                background-color: #d4edda;
+            }
+            
+            .user-details {
+                display: none;
+                padding: 10px;
+                background-color: white;
+            }
+            
+            .user-details.expanded {
+                display: block;
+            }
+            
+            .detail-row {
+                margin-bottom: 5px;
+                display: flex;
+            }
+            
+            .detail-row label {
+                font-weight: bold;
+                width: 140px;
+                flex-shrink: 0;
+            }
+            
+            .recent-messages {
+                margin: 5px 0;
+                padding-left: 20px;
+                max-height: 100px;
+                overflow-y: auto;
+            }
+            
+            .no-users {
+                padding: 15px;
+                text-align: center;
+                color: #666;
+            }
+        `;
+        document.head.appendChild(styleSheet);
+    }
+}
+
+// Update the user interface with current user information
+function updateUsersUI() {
+    if (!userList) return;
+    
+    // Clear current list
+    userList.innerHTML = '';
+    
+    // Get sorted users
+    const users = appState.userManager.getAllUsers();
+    
+    if (users.length === 0) {
+        const noUsers = document.createElement('div');
+        noUsers.className = 'no-users';
+        noUsers.textContent = 'No users yet';
+        userList.appendChild(noUsers);
+        return;
+    }
+    
+    // Create user items
+    users.forEach(user => {
+        const userItem = document.createElement('div');
+        userItem.className = 'user-item';
+        userItem.dataset.username = user.username;
+        
+        // Create summary (always visible)
+        const summary = document.createElement('div');
+        summary.className = `user-summary ${user.isOnline ? 'online' : ''}`;
+        
+        const username = document.createElement('span');
+        username.className = 'username';
+        username.textContent = user.username;
+        
+        const status = document.createElement('span');
+        status.className = 'status';
+        status.textContent = user.isOnline ? '● Online' : '○ Offline';
+        
+        const expandBtn = document.createElement('button');
+        expandBtn.className = 'expand-button';
+        expandBtn.textContent = '▼';
+        
+        summary.appendChild(username);
+        summary.appendChild(status);
+        summary.appendChild(expandBtn);
+        
+        // Create details (initially hidden)
+        const details = document.createElement('div');
+        details.className = 'user-details';
+        
+        // Add detail rows
+        details.innerHTML = `
+            <div class="detail-row">
+                <label>First Seen:</label>
+                <span>${new Date(user.firstSeenDate).toLocaleString()}</span>
+            </div>
+            <div class="detail-row">
+                <label>Last Seen:</label>
+                <span>${new Date(user.lastSeenDate).toLocaleString()}</span>
+            </div>
+            <div class="detail-row">
+                <label>Total Tips:</label>
+                <span>${user.amountTippedTotal || 0} tokens</span>
+            </div>
+            ${user.mostRecentTipAmount ? `
+                <div class="detail-row">
+                    <label>Last Tip:</label>
+                    <span>${user.mostRecentTipAmount} tokens (${user.mostRecentTipDatetime ? new Date(user.mostRecentTipDatetime).toLocaleString() : 'unknown'})</span>
+                </div>
+            ` : ''}
+            ${user.realName ? `
+                <div class="detail-row">
+                    <label>Real Name:</label>
+                    <span>${user.realName}</span>
+                </div>
+            ` : ''}
+            ${user.realLocation ? `
+                <div class="detail-row">
+                    <label>Location:</label>
+                    <span>${user.realLocation}</span>
+                </div>
+            ` : ''}
+            ${user.preferences ? `
+                <div class="detail-row">
+                    <label>Preferences:</label>
+                    <span>${user.preferences}</span>
+                </div>
+            ` : ''}
+            ${user.interests ? `
+                <div class="detail-row">
+                    <label>Interests:</label>
+                    <span>${user.interests}</span>
+                </div>
+            ` : ''}
+            ${user.numberOfPrivateShowsTaken ? `
+                <div class="detail-row">
+                    <label>Private Shows:</label>
+                    <span>${user.numberOfPrivateShowsTaken}</span>
+                </div>
+            ` : ''}
+        `;
+        
+        // Add recent messages if available
+        if (user.mostRecentlySaidThings && user.mostRecentlySaidThings.length > 0) {
+            const messagesContainer = document.createElement('div');
+            messagesContainer.className = 'detail-row';
+            
+            const label = document.createElement('label');
+            label.textContent = 'Recent Messages:';
+            
+            const messagesList = document.createElement('ul');
+            messagesList.className = 'recent-messages';
+            
+            user.mostRecentlySaidThings.slice(0, 5).forEach(message => {
+                const listItem = document.createElement('li');
+                listItem.textContent = message;
+                messagesList.appendChild(listItem);
+            });
+            
+            messagesContainer.appendChild(label);
+            messagesContainer.appendChild(messagesList);
+            details.appendChild(messagesContainer);
+        }
+        
+        // Assemble the user item
+        userItem.appendChild(summary);
+        userItem.appendChild(details);
+        userList.appendChild(userItem);
+        
+        // Add click event to toggle details
+        summary.addEventListener('click', () => {
+            details.classList.toggle('expanded');
+            expandBtn.textContent = details.classList.contains('expanded') ? '▲' : '▼';
+        });
+    });
+}
 // Fetch broadcaster profile information
 async function fetchBroadcasterProfile() {
     if (!configState.config.broadcasterName) return;

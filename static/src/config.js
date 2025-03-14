@@ -1,5 +1,6 @@
 // Configuration handling for Broadcasting Real-Time Coach
 import CloudflareWorkerAPI from './api/cloudflareWorker.js';
+import UserManager from './user-manager.js';
 
 // App State - Configuration related
 const configState = {
@@ -11,6 +12,13 @@ const configState = {
         preferences: '',
         sessionKey: null,
         scannedUrl: '' // New field to store scanned QR code URL
+    },
+    
+    // Method to update config
+    updateConfig(newConfig) {
+        this.config = { ...this.config, ...newConfig };
+        localStorage.setItem('chatCoachConfig', JSON.stringify(this.config));
+        return this.config;
     }
 };
 
@@ -19,6 +27,7 @@ let configToggle;
 let configSection;
 let saveConfigBtn;
 let apiTestResult;
+let userManager;
 
 // Initialize configuration module
 async function initConfig() {
@@ -27,10 +36,19 @@ async function initConfig() {
     configSection = document.getElementById('configSection');
     saveConfigBtn = document.getElementById('saveConfig');
     
+    // Initialize UserManager if it doesn't exist in window
+    if (!window.userManager) {
+        window.userManager = new UserManager();
+    }
+    userManager = window.userManager;
+    
     // Add event listeners
     configToggle.addEventListener('click', toggleConfig);
     saveConfigBtn.addEventListener('click', saveConfig);
     document.getElementById('testApiConnection').addEventListener('click', testApiConnection);
+    
+    // Add data export/import UI
+    addDataManagementUI();
     
     // Load saved configuration
     loadConfig();
@@ -111,6 +129,142 @@ async function saveConfig() {
 // Toggle configuration section visibility
 function toggleConfig() {
     configSection.classList.toggle('hidden');
+}
+
+/**
+ * Add data management UI elements
+ */
+function addDataManagementUI() {
+    // Create data management section
+    const settingsSection = document.getElementById('configSection');
+    const dataSection = document.createElement('div');
+    dataSection.className = 'settings-group';
+    dataSection.innerHTML = `
+        <h3>Data Management</h3>
+        <div class="settings-row">
+            <label>Import/Export Data:</label>
+            <div class="button-group">
+                <button id="exportData" class="action-button">Export Data</button>
+                <button id="importData" class="action-button">Import Data</button>
+            </div>
+        </div>
+        <div class="settings-row hidden" id="importOptions">
+            <label>Import Options:</label>
+            <div class="checkbox-group">
+                <input type="checkbox" id="mergeData" name="mergeData">
+                <label for="mergeData">Merge with existing data</label>
+            </div>
+        </div>
+        <div id="dataManagementResult" class="result-box hidden"></div>
+    `;
+    
+    // Add the data section to the settings section
+    settingsSection.appendChild(dataSection);
+    
+    // Get DOM elements
+    const exportButton = document.getElementById('exportData');
+    const importButton = document.getElementById('importData');
+    const dataResult = document.getElementById('dataManagementResult');
+    const importOptions = document.getElementById('importOptions');
+    const mergeCheckbox = document.getElementById('mergeData');
+    
+    // Add event listeners
+    exportButton.addEventListener('click', () => {
+        try {
+            const blob = new Blob([userManager.exportData(configState.config)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `broadcasting-coach-data-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            
+            // Show success message
+            dataResult.textContent = 'Data exported successfully!';
+            dataResult.style.backgroundColor = '#d4edda';
+            dataResult.classList.remove('hidden');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                dataResult.classList.add('hidden');
+            }, 3000);
+        } catch (error) {
+            // Show error message
+            dataResult.textContent = `Export failed: ${error.message}`;
+            dataResult.style.backgroundColor = '#f8d7da';
+            dataResult.classList.remove('hidden');
+        }
+    });
+    
+    importButton.addEventListener('click', () => {
+        // Toggle import options
+        importOptions.classList.toggle('hidden');
+        
+        // Show file picker
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Check file size
+            if (file.size > 10 * 1024 * 1024) {
+                dataResult.textContent = 'File size exceeds 10MB limit';
+                dataResult.style.backgroundColor = '#f8d7da';
+                dataResult.classList.remove('hidden');
+                return;
+            }
+            
+            // Read file
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    // Get file content
+                    const fileContent = event.target.result;
+                    
+                    // Confirm import
+                    if (confirm('This will replace your current data. Are you sure you want to proceed?')) {
+                        // Import data
+                        const mergeMode = mergeCheckbox.checked;
+                        const result = userManager.importData(fileContent, configState, mergeMode);
+                        
+                        if (result.success) {
+                            // Show success message
+                            dataResult.textContent = result.message;
+                            dataResult.style.backgroundColor = '#d4edda';
+                            dataResult.classList.remove('hidden');
+                            
+                            // Reload page after short delay
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            // Show error message
+                            dataResult.textContent = result.message;
+                            dataResult.style.backgroundColor = '#f8d7da';
+                            dataResult.classList.remove('hidden');
+                        }
+                    }
+                } catch (error) {
+                    // Show error message
+                    dataResult.textContent = `Import failed: ${error.message}`;
+                    dataResult.style.backgroundColor = '#f8d7da';
+                    dataResult.classList.remove('hidden');
+                }
+            };
+            
+            reader.onerror = () => {
+                dataResult.textContent = 'Error reading file';
+                dataResult.style.backgroundColor = '#f8d7da';
+                dataResult.classList.remove('hidden');
+            };
+            
+            reader.readAsText(file);
+        });
+        
+        input.click();
+    });
 }
 
 // Test backend API connection
