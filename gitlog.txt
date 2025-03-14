@@ -1,0 +1,131 @@
+commit b5a6feb3347c558de0e66822437169b2683b6bbe
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 17:46:59 2025 +0800
+
+    The test API button is working in local dev
+
+commit 3d109bd4510bfd1b0024b84e09ded0176fb4bada
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 17:45:49 2025 +0800
+
+    refactored to only a worker
+
+commit 472fbfd0107c19f8dd4e7e09437cd9cd3cfc7f46
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 15:38:38 2025 +0800
+
+    merge
+
+commit 3bd2738834d62fa77be866c774e3896e01dac022
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 15:36:58 2025 +0800
+
+    cors problem
+
+commit 40ab71a74bf6a61d16b2672d7433d5a47d2de182
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 14:41:10 2025 +0800
+
+    automated testing
+
+commit 3d8a13cb6147e8ec4ad08a0a224d711e88c92e6c
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 14:36:50 2025 +0800
+
+    ignore not
+
+commit 95b60e3bdd3bda07171470620d75743e450f8695
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 14:36:44 2025 +0800
+
+    wrangler
+
+commit 0ec2e74ae63634776bc4d35a231cbb21c2474ad8
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 14:08:07 2025 +0800
+
+    validation
+
+commit 34bf9a58575c357badcd6ff6c7da89a9872b161f
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 14:06:49 2025 +0800
+
+    session keys
+
+commit 283c976ff6f616b59cad03c5895afedb66935e76
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 13:54:16 2025 +0800
+
+    inline prompt
+
+commit 43cd62b771ac885252a6ae230d0d9b4821dbc243
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 13:40:38 2025 +0800
+
+    switch to embedded prompt
+
+commit aa43ac1ce3c08a3d3814397c427823118b4dd4b1
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 13:22:57 2025 +0800
+
+    prompt
+
+commit 81831b0a46a19b4cbf7bae01eb1137c7e1b33e88
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 13:16:46 2025 +0800
+
+    migrate prompt to backend
+
+commit 432aeb418b4c56c80e3be80dc85d46e5c681e3de
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 13:04:23 2025 +0800
+
+    use promptTemplate.txt
+
+commit 745214bd3646831a0d5557061558c5445fff37e4
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 13:04:09 2025 +0800
+
+    .gitignore .wrangler
+
+commit ff95716b04be9c528e145e876125838a66d3f91f
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 12:31:44 2025 +0800
+
+    backend
+
+commit e2971ae4d60087067a7bb16b9f511e319dd16b72
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 12:25:33 2025 +0800
+
+    first round working worker
+
+commit 93489c1f963932e7096dbad49f788dc5ed2d2a10
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 12:13:19 2025 +0800
+
+    create empty worker in backend
+
+commit d47622d11bee1e02c15f2a83008a4829791be7d2
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 11:59:06 2025 +0800
+
+    start backend development
+
+commit 7feba2af329b49697e91f7a489ea7f3f23060ba5
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 11:33:25 2025 +0800
+
+    Ai generated documents
+
+commit 66bd2f296f8023cb5ce9045ff80563f28ca7ffd5
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 11:12:06 2025 +0800
+
+    refactored
+
+commit 42955a52cef9be16982b4477f701400e073c2b5f
+Author: Your Name <you@example.com>
+Date:   Thu Mar 13 10:48:35 2025 +0800
+
+    first commit

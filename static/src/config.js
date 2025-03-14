@@ -1,4 +1,5 @@
 // Configuration handling for Broadcasting Real-Time Coach
+import CloudflareWorkerAPI from './api/cloudflareWorker.js';
 
 // App State - Configuration related
 const configState = {
@@ -7,10 +8,9 @@ const configState = {
         broadcasterName: '',
         promptLanguage: 'en-US',
         promptDelay: 5,
-        preferences: ''
-    },
-    sessionKey: null,
-    sessionKeyExpires: null
+        preferences: '',
+        sessionKey: null
+    }
 };
 
 // DOM Elements
@@ -20,7 +20,7 @@ let saveConfigBtn;
 let apiTestResult;
 
 // Initialize configuration module
-function initConfig() {
+async function initConfig() {
     // Get DOM elements
     configToggle = document.getElementById('configToggle');
     configSection = document.getElementById('configSection');
@@ -33,6 +33,24 @@ function initConfig() {
     
     // Load saved configuration
     loadConfig();
+    
+    // Try to load session key from localStorage
+    const sessionData = CloudflareWorkerAPI.loadSessionData();
+    if (sessionData) {
+        configState.config.sessionKey = sessionData.sessionKey;
+    } else if (configState.config.broadcasterName) {
+        // If we have a broadcaster name but no session, try to get a new session key
+        try {
+            const { sessionKey, expiresAt } = await CloudflareWorkerAPI.getSessionKey(
+                'user', // Default username
+                configState.config.broadcasterName
+            );
+            configState.config.sessionKey = sessionKey;
+            CloudflareWorkerAPI.saveSessionData(sessionKey, expiresAt);
+        } catch (error) {
+            console.error('Error getting session key during init:', error);
+        }
+    }
 }
 
 // Load saved configuration from localStorage
@@ -59,15 +77,28 @@ function loadConfig() {
 }
 
 // Save configuration to localStorage
-function saveConfig() {
+async function saveConfig() {
     configState.config.aiModel = document.getElementById('aiModel').value;
     configState.config.broadcasterName = document.getElementById('broadcasterName').value;
     configState.config.promptLanguage = document.getElementById('promptLanguage').value;
     configState.config.promptDelay = parseInt(document.getElementById('promptDelay').value) || 5;
     configState.config.preferences = document.getElementById('preferences').value;
 
+    // Get a fresh session key when saving config
+    try {
+        const { sessionKey, expiresAt } = await CloudflareWorkerAPI.getSessionKey(
+            'user', // Default username
+            configState.config.broadcasterName
+        );
+        configState.config.sessionKey = sessionKey;
+        CloudflareWorkerAPI.saveSessionData(sessionKey, expiresAt);
+    } catch (error) {
+        console.error('Error getting session key during save:', error);
+        window.addActivityItem('Error refreshing session key, but configuration saved', 'event');
+    }
+
     localStorage.setItem('chatCoachConfig', JSON.stringify(configState.config));
-    addActivityItem('Configuration saved', 'event');
+    window.addActivityItem('Configuration saved', 'event');
     configSection.classList.add('hidden');
     
     // Return the updated config
@@ -80,7 +111,6 @@ function toggleConfig() {
 }
 
 // Test backend API connection
-// The test button is working
 async function testApiConnection() {
     // Initialize UI elements
     apiTestResult = document.getElementById('apiTestResult');
@@ -88,25 +118,20 @@ async function testApiConnection() {
     apiTestResult.style.backgroundColor = '#f8f9fa';
     apiTestResult.textContent = 'Testing API connection...';
 
-    
     try {
-        // Step 1: Get Session Key
-        const sessionResponse = await fetch(`/api/get-session-key`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: 'test_user',
-                broadcaster: configState.config.broadcasterName || 'test_broadcaster'
-            })
-        });
-
-        const sessionData = await sessionResponse.json();
-        const sessionKey = sessionData.sessionKey;
-        const expiresAt = sessionData.expiresAt;
+        // Step 1: Get Session Key using our CloudflareWorkerAPI
+        const { sessionKey, expiresAt } = await CloudflareWorkerAPI.getSessionKey(
+            'test_user',
+            configState.config.broadcasterName || 'test_broadcaster'
+        );
 
         if (!sessionKey || !expiresAt) {
             throw new Error('Invalid session key response');
         }
+
+        // Update the config with this session key
+        configState.config.sessionKey = sessionKey;
+        CloudflareWorkerAPI.saveSessionData(sessionKey, expiresAt);
 
         // Step 2: Test Generate Prompt
         const testContext = [{
@@ -115,20 +140,15 @@ async function testApiConnection() {
             timestamp: new Date().toISOString()
         }];
 
-        const promptResponse = await fetch(`/api/generate-prompt`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                context: testContext,
-                broadcaster: configState.config.broadcasterName || 'test_broadcaster',
-                preferences: configState.config.preferences,
-                sessionKey: sessionKey
-            })
-        });
+        // Use current config with our new session key
+        const result = await CloudflareWorkerAPI.generateCoachingPrompt(
+            configState.config,
+            testContext,
+            null // No callback needed for test
+        );
 
-        const promptData = await promptResponse.json();
-        if (!promptData.action || !promptData.content) {
-            throw new Error('Invalid prompt response');
+        if (!result) {
+            throw new Error('Failed to generate prompt');
         }
 
         // Update UI with success
@@ -138,8 +158,7 @@ async function testApiConnection() {
             <div class="test-details">
                 <p>Session Key: ${sessionKey}</p>
                 <p>Expires At: ${expiresAt}</p>
-                <p>Action: ${promptData.action}</p>
-                <p>Content: ${promptData.content}</p>
+                <p>Test Result: ${result}</p>
             </div>
         `;
 
