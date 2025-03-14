@@ -77,9 +77,14 @@ export class UserManager {
         });
     }
 
+    // Mark a user as active and online
+    markUserActive(username) {
+        return this.updateUser(username, { isOnline: true });
+    }
+
     // Mark a user as online
     markUserOnline(username) {
-        return this.updateUser(username, { isOnline: true });
+        return this.markUserActive(username);
     }
 
     // Mark a user as offline

@@ -214,9 +214,10 @@ function processEvent(message) {
         const username = object.user.username || 'Anonymous';
         addActivityItem(`${username} has followed`, 'event');
         
-        // Track user activity
+        // Track user activity and mark active
         if (username !== 'Anonymous') {
             appState.userManager.addUser(username);
+            appState.userManager.markUserActive(username);
             updateUsersUI();
         }
     } else if (method === "unfollow") {
@@ -226,9 +227,10 @@ function processEvent(message) {
         const username = object.user.username || 'Anonymous';
         addActivityItem(`${username} joined the fan club`, 'event');
         
-        // Track user activity
+        // Track user activity and mark active
         if (username !== 'Anonymous') {
             appState.userManager.addUser(username);
+            appState.userManager.markUserActive(username);
             updateUsersUI();
         }
     } else if (method === "chatMessage") {
@@ -241,10 +243,11 @@ function processEvent(message) {
         } else {
             addActivityItem(`${username}: ${messageText}`, 'chat');
             
-            // Track user message
+            // Track user message and mark active
             if (username !== 'Anonymous') {
                 appState.userManager.addUser(username);
                 appState.userManager.addUserMessage(username, messageText);
+                appState.userManager.markUserActive(username);
                 updateUsersUI();
             }
         }
@@ -254,10 +257,11 @@ function processEvent(message) {
         const messageText = object.message.message || '';
         addActivityItem(`${fromUser} sent private message to ${toUser}: ${messageText}`, 'chat');
         
-        // Track private message
+        // Track private message and mark active
         if (fromUser !== 'Anonymous') {
             appState.userManager.addUser(fromUser);
             appState.userManager.addUserMessage(fromUser, messageText);
+            appState.userManager.markUserActive(fromUser);
             updateUsersUI();
         }
     } else if (method === "tip") {
@@ -273,10 +277,11 @@ function processEvent(message) {
         
         addActivityItem(tipText, 'tip');
         
-        // Track user tip
+        // Track user tip and mark active
         if (!isAnon && username !== 'Anonymous') {
             appState.userManager.addUser(username);
             appState.userManager.recordUserTip(username, tokens);
+            appState.userManager.markUserActive(username);
             updateUsersUI();
         }
     } else if (method === "roomSubjectChange") {
@@ -288,9 +293,10 @@ function processEvent(message) {
         const mediaName = object.media.name || '';
         addActivityItem(`${username} purchased ${mediaType} set: ${mediaName}`, 'event');
         
-        // Track user purchase
+        // Track user purchase and mark active
         if (username !== 'Anonymous') {
             appState.userManager.addUser(username);
+            appState.userManager.markUserActive(username);
             updateUsersUI();
         }
     } else {

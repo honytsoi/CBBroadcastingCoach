@@ -21,6 +21,13 @@ body {
     min-height: 100vh;
 }
 
+@media (min-width: 1200px) {
+    .app-container {
+        max-width: 1600px;
+        padding: 1.5rem 2rem;
+    }
+}
+
 /* Header Styles */
 header {
     display: flex;
@@ -108,13 +115,65 @@ textarea {
     flex-grow: 1;
 }
 
-@media (min-width: 768px) {
+/* Tablet layout */
+@media (min-width: 768px) and (max-width: 1199px) {
     .main-content {
         grid-template-columns: 1fr 1fr;
     }
     
     .scanner-section {
         grid-column: 1 / -1;
+    }
+}
+
+/* Desktop layout */
+@media (min-width: 1200px) {
+    .main-content {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto 1fr;
+        gap: 2rem;
+    }
+    
+    .scanner-section {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        margin-bottom: 1rem;
+    }
+    
+    .activity-section {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    
+    .prompt-section {
+        grid-column: 2;
+        grid-row: 2;
+        position: relative;
+    }
+    
+    /* Add subtle divider between sections */
+    .prompt-section::before,
+    .prompt-section::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: #e0e0e0;
+    }
+    
+    .prompt-section::before {
+        left: -1rem;
+    }
+    
+    .prompt-section::after {
+        right: -1rem;
+    }
+    
+    #usersSection {
+        grid-column: 3;
+        grid-row: 2;
+        margin: 0;
     }
 }
 
@@ -169,6 +228,35 @@ textarea {
     border-radius: 4px;
     background-color: #fafafa;
     margin-bottom: 1rem;
+}
+
+/* Increase feed height on desktop */
+@media (min-width: 1200px) {
+    .feed {
+        max-height: 500px;
+    }
+    
+    /* Ensure all sections have consistent height */
+    .activity-section,
+    .prompt-section,
+    #usersSection {
+        height: calc(100vh - 280px);
+        min-height: 400px;
+        transition: all 0.3s ease;
+    }
+    
+    .user-list {
+        max-height: calc(100% - 60px);
+    }
+    
+    /* Enhance section titles for better visual hierarchy */
+    .activity-section h2,
+    .prompt-section h2,
+    #usersSection h2 {
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #4a90e2;
+        margin-bottom: 1.25rem;
+    }
 }
 
 .feed-item {
@@ -432,14 +520,4 @@ input:checked + .slider:before {
     font-size: 12px;
     color: #666;
     padding: 0 5px;
-}
-
-@media (min-width: 768px) {
-    .main-content {
-        grid-template-columns: 1fr 1fr 1fr;
-    }
-    
-    .scanner-section {
-        grid-column: 1 / -1;
-    }
 }
