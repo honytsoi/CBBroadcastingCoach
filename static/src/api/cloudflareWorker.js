@@ -65,6 +65,77 @@ function saveSessionData(sessionKey, expiresAt) {
     }
 }
 
+/**
+ * Create or get the error display element
+ */
+function getOrCreateErrorDisplay() {
+    let errorDisplay = document.getElementById('errorDisplay');
+    
+    if (!errorDisplay) {
+        errorDisplay = document.createElement('div');
+        errorDisplay.id = 'errorDisplay';
+        errorDisplay.style.position = 'fixed';
+        errorDisplay.style.bottom = '20px';
+        errorDisplay.style.right = '20px';
+        errorDisplay.style.padding = '15px';
+        errorDisplay.style.backgroundColor = '#ffebee';
+        errorDisplay.style.border = '1px solid #ffcdd2';
+        errorDisplay.style.borderRadius = '4px';
+        errorDisplay.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+        errorDisplay.style.zIndex = '1000';
+        errorDisplay.style.display = 'none';
+        errorDisplay.style.maxWidth = '400px';
+        errorDisplay.style.wordWrap = 'break-word';
+        document.body.appendChild(errorDisplay);
+    }
+    
+    return errorDisplay;
+}
+
+/**
+ * Display an error message on the screen
+ */
+function displayError(error) {
+    const errorDisplay = getOrCreateErrorDisplay();
+    const isQuotaError = error.message.toLowerCase().includes('quota') || 
+                         error.message.toLowerCase().includes('limit') ||
+                         error.message.toLowerCase().includes('exceeded');
+    
+    // Set title based on error type
+    let errorTitle = 'Error';
+    if (isQuotaError) {
+        errorTitle = 'Quota Exceeded Error';
+        errorDisplay.style.backgroundColor = '#fff3cd';
+        errorDisplay.style.borderColor = '#ffecb5';
+    } else {
+        errorDisplay.style.backgroundColor = '#ffebee';
+        errorDisplay.style.borderColor = '#ffcdd2';
+    }
+    
+    // Build error message HTML
+    errorDisplay.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 8px;">${errorTitle}</div>
+        <div>${error.message}</div>
+        <div style="text-align: right; margin-top: 10px;">
+            <button onclick="document.getElementById('errorDisplay').style.display='none'" 
+                    style="padding: 5px 10px; background: #f1f1f1; border: none; border-radius: 3px; cursor: pointer;">
+                Dismiss
+            </button>
+        </div>
+    `;
+    
+    errorDisplay.style.display = 'block';
+    
+    // Auto-hide after 20 seconds if it's not a quota error
+    if (!isQuotaError) {
+        setTimeout(() => {
+            if (errorDisplay) {
+                errorDisplay.style.display = 'none';
+            }
+        }, 20000);
+    }
+}
+
 async function generateCoachingPrompt(config, context, onPromptGenerated) {
     // debugging
     console.log('generateCoachingPrompt', config, context);
@@ -72,6 +143,12 @@ async function generateCoachingPrompt(config, context, onPromptGenerated) {
 
     aiState.isGeneratingPrompt = true;
     try {
+        // Validate the AI model
+        const APPROVED_MODELS = ['@cf/meta/llama-3.2-1b-instruct'];
+        if (!APPROVED_MODELS.includes(config.aiModel)) {
+            throw new Error(`AI model ${config.aiModel} is not approved. Only @cf/meta/llama-3.2-1b-instruct is currently supported.`);
+        }
+        
         // Ensure we have a valid session key
         let sessionKey = config.sessionKey;
         
@@ -108,12 +185,16 @@ async function generateCoachingPrompt(config, context, onPromptGenerated) {
                 context: contextArray,
                 broadcaster: config.broadcasterName,
                 preferences: config.preferences,
+                aimodel: config.aiModel,  // Pass AI model to backend
                 sessionKey: sessionKey
             })
         });
 
+        // Handle HTTP errors
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
+            throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -133,6 +214,11 @@ async function generateCoachingPrompt(config, context, onPromptGenerated) {
         return suggestion;
     } catch (error) {
         console.error('Error generating coaching prompt:', error);
+        
+        // Display error on screen
+        displayError(error);
+        
+        // Add to activity feed
         window.addActivityItem(`Error generating prompt: ${error.message}`, 'event');
         return null;
     } finally {

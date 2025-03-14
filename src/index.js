@@ -154,7 +154,23 @@ function simpleHash(input) {
 		  }
   
 		  console.log('Preparing prompt template...');
-		  const model = aimodel || '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+		  // Use only the approved model
+		  const APPROVED_MODELS = ['@cf/meta/llama-3.2-1b-instruct'];
+		  const requestedModel = aimodel || '@cf/meta/llama-3.2-1b-instruct';
+		  
+		  // Validate the model
+		  if (!APPROVED_MODELS.includes(requestedModel)) {
+		    console.error('Invalid model requested:', requestedModel);
+		    return new Response(JSON.stringify({ 
+		      error: 'Invalid model. Only @cf/meta/llama-3.2-1b-instruct is currently supported.',
+		      errorType: 'model_validation'
+		    }), {
+		      status: 403,
+		      headers: { 'Content-Type': 'application/json' },
+		    });
+		  }
+		  
+		  const model = '@cf/meta/llama-3.2-1b-instruct';
 		  console.log('Using AI model:', model);
   
 		  const formattedContext = context

@@ -5,7 +5,7 @@ import UserManager from './user-manager.js';
 // App State - Configuration related
 const configState = {
     config: {
-        aiModel: 'anthropic/claude-instant-v1',
+        aiModel: '@cf/meta/llama-3.2-1b-instruct',
         broadcasterName: '',
         promptLanguage: 'en-US',
         promptDelay: 5,
@@ -81,7 +81,7 @@ function loadConfig() {
             configState.config = { ...configState.config, ...parsedConfig };
             
             // Populate form fields
-            document.getElementById('aiModel').value = configState.config.aiModel || 'anthropic/claude-instant-v1';
+            document.getElementById('aiModel').value = configState.config.aiModel || '@cf/meta/llama-3.2-1b-instruct';
             document.getElementById('scannedUrl').value = configState.config.scannedUrl || '';
             document.getElementById('broadcasterName').value = configState.config.broadcasterName || '';
             document.getElementById('promptLanguage').value = configState.config.promptLanguage || 'en-US';
