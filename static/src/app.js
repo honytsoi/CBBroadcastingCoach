@@ -40,6 +40,24 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Make addActivityItem available globally for other modules
     window.addActivityItem = addActivityItem;
+    
+    // Check if we have a saved scanned URL and connect automatically
+    setTimeout(() => {
+        if (configState.config.scannedUrl) {
+            // Update UI to show the saved URL
+            const apiEndpointEl = document.getElementById('apiEndpoint');
+            const scanResult = document.getElementById('scanResult');
+            
+            if (apiEndpointEl && scanResult) {
+                apiEndpointEl.textContent = configState.config.scannedUrl;
+                scanResult.classList.remove('hidden');
+                
+                // Connect to the saved URL
+                connectToEventAPI(configState.config.scannedUrl);
+                addActivityItem('Reconnected to previously scanned QR code URL', 'event');
+            }
+        }
+    }, 500); // Short delay to ensure config is loaded
 });
 
 // Add item to activity feed
