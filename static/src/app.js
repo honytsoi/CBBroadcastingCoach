@@ -322,7 +322,6 @@ function setupUsersSection() {
         // Create elements
         usersSection = document.createElement('div');
         usersSection.id = 'usersSection';
-        usersSection.className = 'section';
         
         const usersHeader = document.createElement('h2');
         usersHeader.textContent = 'Users';
@@ -335,100 +334,17 @@ function setupUsersSection() {
         usersSection.appendChild(usersHeader);
         usersSection.appendChild(userList);
         
-        // Add to the UI after the prompt section
-        const promptSection = document.querySelector('.prompt-section');
-        if (promptSection) {
-            promptSection.parentNode.insertBefore(usersSection, promptSection.nextSibling);
-        } else {
-            // Fallback - add to main content
-            document.querySelector('.main-content').appendChild(usersSection);
-        }
+        // Always append to the main content for proper grid layout
+        document.querySelector('.main-content').appendChild(usersSection);
         
-        // Add styles if needed
-        addUsersSectionStyles();
+        // No need to add dynamic styles as they're already in main.css
+        console.log('Users section initialized and added to grid layout');
     }
     
     // Initial UI update
     updateUsersUI();
 }
 
-// Add necessary styles for users section
-function addUsersSectionStyles() {
-    // Check if styles already exist
-    if (!document.getElementById('userSectionStyles')) {
-        const styleSheet = document.createElement('style');
-        styleSheet.id = 'userSectionStyles';
-        styleSheet.textContent = `
-            #usersSection {
-                margin: 15px 0;
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                padding: 15px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            }
-            
-            .user-list {
-                max-height: 300px;
-                overflow-y: auto;
-            }
-            
-            .user-item {
-                margin-bottom: 8px;
-                border: 1px solid #e0e0e0;
-                border-radius: 4px;
-                overflow: hidden;
-            }
-            
-            .user-summary {
-                padding: 8px 12px;
-                background-color: #f0f0f0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                cursor: pointer;
-            }
-            
-            .user-summary.online {
-                background-color: #d4edda;
-            }
-            
-            .user-details {
-                display: none;
-                padding: 10px;
-                background-color: white;
-            }
-            
-            .user-details.expanded {
-                display: block;
-            }
-            
-            .detail-row {
-                margin-bottom: 5px;
-                display: flex;
-            }
-            
-            .detail-row label {
-                font-weight: bold;
-                width: 140px;
-                flex-shrink: 0;
-            }
-            
-            .recent-messages {
-                margin: 5px 0;
-                padding-left: 20px;
-                max-height: 100px;
-                overflow-y: auto;
-            }
-            
-            .no-users {
-                padding: 15px;
-                text-align: center;
-                color: #666;
-            }
-        `;
-        document.head.appendChild(styleSheet);
-    }
-}
 
 // Update the user interface with current user information
 function updateUsersUI() {
