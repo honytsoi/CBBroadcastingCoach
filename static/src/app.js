@@ -83,10 +83,17 @@ function addActivityItem(text, type = 'event') {
 }
 
 // Add prompt to prompt feed
-function addPromptItem(text) {
+function addPromptItem(text, voiceType = 'do') {
     const item = document.createElement('div');
-    item.className = 'feed-item prompt';
+    item.className = `feed-item prompt ${voiceType}-prompt`;
     item.textContent = text;
+    
+    // Add a visual indicator for the voice type
+    const voiceIndicator = document.createElement('span');
+    voiceIndicator.className = 'voice-indicator';
+    voiceIndicator.textContent = voiceType === 'say' ? '🗣️ Say:' : '🎯 Do:';
+    item.prepend(voiceIndicator);
+    
     promptFeed.appendChild(item);
     promptFeed.scrollTop = promptFeed.scrollHeight;
     
@@ -96,15 +103,23 @@ function addPromptItem(text) {
     
     // Speak the prompt if audio is enabled
     if (audioEnabled.checked) {
-        speakText(text);
+        speakText(text, voiceType);
     }
 }
 
-// Text-to-speech function
-function speakText(text) {
+// Text-to-speech function with voice type support
+function speakText(text, voiceType = 'do') {
     if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = configState.config.promptLanguage;
+        
+        // Use appropriate voice based on voiceType
+        if (voiceType === 'say' && configState.config.sayVoice) {
+            utterance.voice = configState.config.sayVoice;
+        } else if (voiceType === 'do' && configState.config.doVoice) {
+            utterance.voice = configState.config.doVoice;
+        }
+        
         speechSynthesis.speak(utterance);
     }
 }

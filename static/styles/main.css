@@ -284,8 +284,43 @@ textarea {
 }
 
 .feed-item.prompt {
+    position: relative;
     color: #4a90e2;
     font-weight: bold;
+    padding-left: 50px; /* Make space for the voice indicator */
+}
+
+/* Specific styling for "say" prompts */
+.feed-item.say-prompt {
+    background-color: #f0f7ff;
+    color: #0066cc;
+    border-left: 4px solid #0066cc;
+}
+
+/* Specific styling for "do" prompts */
+.feed-item.do-prompt {
+    background-color: #f6f6f6;
+    color: #444;
+    border-left: 4px solid #666;
+}
+
+.voice-indicator {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    font-size: 0.9rem;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.say-prompt .voice-indicator {
+    color: #0066cc;
+}
+
+.do-prompt .voice-indicator {
+    color: #444;
 }
 
 /* Audio Controls */

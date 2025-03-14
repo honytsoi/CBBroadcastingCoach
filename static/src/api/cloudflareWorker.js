@@ -136,6 +136,8 @@ function displayError(error) {
     }
 }
 
+// We no longer need the determineSayOrDoPrompt function since the backend provides this information
+
 async function generateCoachingPrompt(config, context, onPromptGenerated) {
     // debugging
     console.log('generateCoachingPrompt', config, context);
@@ -204,11 +206,13 @@ async function generateCoachingPrompt(config, context, onPromptGenerated) {
             config.sessionKey = data.sessionKey;
             saveSessionData(data.sessionKey, data.expiresAt);
         }
+        // Get the content and action from the response
+        const suggestion = data.content?.trim() || '';
+        const promptType = data.action || 'do'; // Default to 'do' if not provided
         
-        const suggestion = data.content.trim();
-
+        // Pass both the suggestion and the prompt type to the callback
         if (onPromptGenerated && typeof onPromptGenerated === 'function') {
-            onPromptGenerated(suggestion);
+            onPromptGenerated(suggestion, promptType);
         }
 
         return suggestion;

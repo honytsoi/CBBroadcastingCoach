@@ -11,7 +11,9 @@ const configState = {
         promptDelay: 5,
         preferences: '',
         sessionKey: null,
-        scannedUrl: '' // New field to store scanned QR code URL
+        scannedUrl: '', // New field to store scanned QR code URL
+        sayVoice: null, // Voice for "say" prompts (things to repeat)
+        doVoice: null   // Voice for "do" prompts (instructions)
     },
     
     // Method to update config
@@ -46,6 +48,9 @@ async function initConfig() {
     configToggle.addEventListener('click', toggleConfig);
     saveConfigBtn.addEventListener('click', saveConfig);
     document.getElementById('testApiConnection').addEventListener('click', testApiConnection);
+    
+    // Add voice selection UI
+    addVoiceSelectionUI();
     
     // Add data export/import UI
     addDataManagementUI();
@@ -104,6 +109,31 @@ async function saveConfig() {
     configState.config.promptLanguage = document.getElementById('promptLanguage').value;
     configState.config.promptDelay = parseInt(document.getElementById('promptDelay').value) || 5;
     configState.config.preferences = document.getElementById('preferences').value;
+    
+    // Save voice selections
+    const sayVoiceSelect = document.getElementById('sayVoiceSelect');
+    const doVoiceSelect = document.getElementById('doVoiceSelect');
+    const voices = speechSynthesis.getVoices();
+    
+    // Update voice settings in config
+    if (sayVoiceSelect.value) {
+        const voiceIndex = parseInt(sayVoiceSelect.value);
+        // We need to store the voice name and language since the actual SpeechSynthesisVoice object can't be serialized
+        configState.config.sayVoiceName = voices[voiceIndex].name;
+        configState.config.sayVoiceLang = voices[voiceIndex].lang;
+    } else {
+        configState.config.sayVoiceName = null;
+        configState.config.sayVoiceLang = null;
+    }
+    
+    if (doVoiceSelect.value) {
+        const voiceIndex = parseInt(doVoiceSelect.value);
+        configState.config.doVoiceName = voices[voiceIndex].name;
+        configState.config.doVoiceLang = voices[voiceIndex].lang;
+    } else {
+        configState.config.doVoiceName = null;
+        configState.config.doVoiceLang = null;
+    }
 
     // Get a fresh session key when saving config
     try {
@@ -129,6 +159,177 @@ async function saveConfig() {
 // Toggle configuration section visibility
 function toggleConfig() {
     configSection.classList.toggle('hidden');
+}
+
+/**
+ * Add voice selection UI elements
+ */
+function addVoiceSelectionUI() {
+    // Create voice settings section
+    const settingsSection = document.getElementById('configSection');
+    const voiceSection = document.createElement('div');
+    voiceSection.className = 'settings-group';
+    voiceSection.innerHTML = `
+        <h3>Voice Settings</h3>
+        <p>Select different voices for different prompt types:</p>
+        <div class="settings-row">
+            <label for="sayVoiceSelect">Say Voice:</label>
+            <div class="voice-control">
+                <select id="sayVoiceSelect"></select>
+                <button id="testSayVoice" class="action-button">Test</button>
+            </div>
+            <p class="help-text">"Say" voice is used for prompts that the broadcaster should repeat aloud.</p>
+        </div>
+        <div class="settings-row">
+            <label for="doVoiceSelect">Do Voice:</label>
+            <div class="voice-control">
+                <select id="doVoiceSelect"></select>
+                <button id="testDoVoice" class="action-button">Test</button>
+            </div>
+            <p class="help-text">"Do" voice is used for instructions and actions the broadcaster should perform.</p>
+        </div>
+        <div id="voiceLoadingStatus" style="margin-top: 10px;"></div>
+    `;
+    
+    // Add the voice section to the settings section
+    settingsSection.appendChild(voiceSection);
+    
+    // Initialize voice selects
+    initVoiceSelects();
+    
+    // Add test button event listeners
+    document.getElementById('testSayVoice').addEventListener('click', () => testVoice('say'));
+    document.getElementById('testDoVoice').addEventListener('click', () => testVoice('do'));
+}
+
+// Initialize voice selection dropdowns
+function initVoiceSelects() {
+    const voiceLoadingStatus = document.getElementById('voiceLoadingStatus');
+    voiceLoadingStatus.textContent = 'Loading available voices...';
+    
+    // Function to populate voice selects
+    function populateVoiceSelects() {
+        const voices = speechSynthesis.getVoices();
+        const saySelect = document.getElementById('sayVoiceSelect');
+        const doSelect = document.getElementById('doVoiceSelect');
+        
+        if (voices.length === 0) {
+            voiceLoadingStatus.textContent = 'No voices available. Try reloading the page.';
+            return;
+        }
+        
+        voiceLoadingStatus.textContent = `${voices.length} voices available.`;
+        
+        // Clear and populate both selects
+        [saySelect, doSelect].forEach(select => {
+            // Save the current selected value if any
+            const currentValue = select.value;
+            
+            // Clear options
+            select.innerHTML = '';
+            
+            // Add default option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Default Voice';
+            select.appendChild(defaultOption);
+            
+            // Add voice options
+            voices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                select.appendChild(option);
+            });
+            
+            // Restore the previous value if it exists
+            if (currentValue) {
+                select.value = currentValue;
+            }
+        });
+        
+        // Try to select saved voices by name and language
+        if (configState.config.sayVoiceName) {
+            const sayVoiceIndex = voices.findIndex(voice => 
+                voice.name === configState.config.sayVoiceName && 
+                voice.lang === configState.config.sayVoiceLang
+            );
+            
+            if (sayVoiceIndex >= 0) {
+                saySelect.value = sayVoiceIndex;
+                // Also set the actual voice object for immediate use
+                configState.config.sayVoice = voices[sayVoiceIndex];
+            }
+        }
+        
+        if (configState.config.doVoiceName) {
+            const doVoiceIndex = voices.findIndex(voice => 
+                voice.name === configState.config.doVoiceName && 
+                voice.lang === configState.config.doVoiceLang
+            );
+            
+            if (doVoiceIndex >= 0) {
+                doSelect.value = doVoiceIndex;
+                // Also set the actual voice object for immediate use
+                configState.config.doVoice = voices[doVoiceIndex];
+            }
+        }
+    }
+    
+    // Try to load voices
+    populateVoiceSelects();
+    
+    // Set up the event to load voices when they change
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoiceSelects;
+    }
+    
+    // Add change event listeners to save voice selections
+    document.getElementById('sayVoiceSelect').addEventListener('change', (e) => {
+        const voices = speechSynthesis.getVoices();
+        const selectedIndex = e.target.value;
+        configState.config.sayVoice = selectedIndex ? voices[selectedIndex] : null;
+    });
+    
+    document.getElementById('doVoiceSelect').addEventListener('change', (e) => {
+        const voices = speechSynthesis.getVoices();
+        const selectedIndex = e.target.value;
+        configState.config.doVoice = selectedIndex ? voices[selectedIndex] : null;
+    });
+}
+
+// Test a selected voice
+function testVoice(voiceType) {
+    const selectId = voiceType === 'say' ? 'sayVoiceSelect' : 'doVoiceSelect';
+    const select = document.getElementById(selectId);
+    const selectedIndex = select.value;
+    
+    if (!selectedIndex) {
+        // Using default voice
+        const utterance = new SpeechSynthesisUtterance(
+            voiceType === 'say' 
+                ? 'This is the default "Say" voice test. Repeat this aloud.' 
+                : 'This is the default "Do" voice test. This would be an instruction.'
+        );
+        utterance.lang = configState.config.promptLanguage;
+        speechSynthesis.speak(utterance);
+        return;
+    }
+    
+    const voices = speechSynthesis.getVoices();
+    const selectedVoice = voices[selectedIndex];
+    
+    if (selectedVoice) {
+        const sampleText = voiceType === 'say' 
+            ? 'This is the "Say" voice test. Repeat this aloud.' 
+            : 'This is the "Do" voice test. This would be an instruction.';
+        
+        const utterance = new SpeechSynthesisUtterance(sampleText);
+        utterance.voice = selectedVoice;
+        speechSynthesis.speak(utterance);
+    } else {
+        alert('Please select a valid voice or try reloading the page.');
+    }
 }
 
 /**
