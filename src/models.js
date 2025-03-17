@@ -3,6 +3,12 @@
 
 const AI_MODELS = [
     {
+        id: '@hf/mistral/mistral-7b-instruct-v0.2',
+        provider: 'Cloudflare-Worker-AI',
+        name: 'Mistral 7B Instruct v0.2',
+        description: 'Fast, adult-friendly'
+    },
+    {
         id: '@cf/meta/llama-3.2-1b-instruct',
         provider: 'Cloudflare-Worker-AI',
         name: 'Llama 3.2 1B',
@@ -14,12 +20,7 @@ const AI_MODELS = [
         name: 'Llama 3.3 70B FP8 Fast',
         description: 'Fast but better for complex prompts'
     },
-    {
-        id: '@hf/mistral/mistral-7b-instruct-v0.2',
-        provider: 'Cloudflare-Worker-AI',
-        name: 'Mistral 7B Instruct v0.2',
-        description: 'Fast, adult-friendly'
-    },
+
     // Commented out models for future use
     // {
     //   id: 'meta-llama/llama-3.2-3b-instruct:free',
