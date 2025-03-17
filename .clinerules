@@ -1,0 +1,92 @@
+# CBBroadcastingCoach Architecture Overview
+
+## Frontend Files
+- static/index.html: Main entry point with UI structure
+- static/src/app.js: Core application logic and event handling
+- static/src/config.js: Configuration management and persistence
+- static/src/api/cloudflareWorker.js: API integration and session management
+- static/src/qr-scanner.js: QR code scanning functionality
+- static/src/data-manager.js: Data handling and persistence
+- static/src/user-manager.js: User tracking and management
+- static/styles/main.css: Main stylesheet
+
+## Backend Files
+- src/index.js: Cloudflare Worker implementation (production backend)
+- server.js: Local development server with mock APIs
+- backend_testing.sh: Backend testing script
+- start-local.sh: Local development setup script
+
+## Configuration Files
+- package.json: Project dependencies and scripts
+- wrangler.jsonc: Cloudflare Workers configuration
+- .editorconfig, .prettierrc: Code formatting
+- .gitignore: Version control ignore rules
+
+## Documentation
+- README.md: Project overview
+- code-review.md: Code review notes
+- LOCAL_DEV_README.md: Local setup instructions
+- gitlog.txt: Version history
+
+## Key Functionality
+
+### Frontend
+1. QR Code Scanning:
+   - Connects to Chaturbate Events API
+   - Handles real-time event streaming
+
+2. AI Coaching:
+   - Generates real-time suggestions
+   - Manages prompt timing and delivery
+   - Supports text-to-speech
+
+3. User Management:
+   - Tracks user activity and interactions
+   - Manages user profiles and history
+
+4. Configuration:
+   - Saves broadcaster preferences
+   - Manages AI model selection
+   - Handles data import/export
+
+### Backend
+1. Cloudflare Worker:
+   - Handles session management
+   - Processes coaching prompts
+   - Manages API security
+
+2. Local Development:
+   - Provides mock APIs
+   - Supports local testing
+   - Handles development setup
+
+## Integration Points
+1. Frontend-Backend:
+   - API endpoints for session and prompts
+   - Event streaming integration
+   - Configuration synchronization
+
+2. External Services:
+   - Chaturbate Events API
+   - Cloudflare Workers AI
+   - QR code scanning library
+
+## File Relationships
+1. Core Flow:
+   index.html → app.js → config.js → cloudflareWorker.js → Cloudflare Worker
+
+2. Event Handling:
+   qr-scanner.js → app.js → user-manager.js/data-manager.js
+
+3. Configuration:
+   config.js ↔ localStorage ↔ Cloudflare Worker
+
+## Development Tools
+1. Local Testing:
+   - server.js provides mock APIs
+   - backend_testing.sh for automated tests
+   - start-local.sh for quick setup
+
+2. Deployment:
+   - wrangler.jsonc configures Cloudflare Worker
+   - package.json manages build process
