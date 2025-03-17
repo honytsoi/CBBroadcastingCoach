@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,11 @@
     <!-- QR Code Scanner Library -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="icon" href="https://www.adult-webcam-faq.com/wp-content/uploads/cropped-adult-webcam-faq-logo-compressed-1-192x192.png" sizes="192x192">
+    <link rel="icon"
+        href="https://www.adult-webcam-faq.com/wp-content/uploads/cropped-adult-webcam-faq-logo-compressed-1-192x192.png"
+        sizes="192x192">
 </head>
+
 <body>
     <div class="app-container">
         <header>
@@ -21,10 +25,10 @@
             <h2>Configuration</h2>
             <!-- OpenRouter API Key no longer needed with new backend -->
             <div class="form-group">
-            <label for="aiModel">AI Model:</label>
-            <select id="aiModel">
-                <option value="loading">Loading available models...</option>
-            </select>
+                <label for="aiModel">AI Model:</label>
+                <select id="aiModel">
+                    <option value="loading">Loading available models...</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="scannedUrl">Scanned URL:</label>
@@ -59,8 +63,10 @@
             <div class="form-group">
                 <button id="saveConfig" class="btn primary">Save Configuration</button>
                 <button id="testApiConnection" class="btn">Test API Connection</button>
-                <div id="apiTestResult" class="hidden" style="margin-top: 10px; padding: 10px; border-radius: 4px;"></div>
+                <div id="apiTestResult" class="hidden" style="margin-top: 10px; padding: 10px; border-radius: 4px;">
+                </div>
             </div>
+            <button id="factoryReset" class="action-button">Factory Reset</button>
         </div>
 
         <div class="main-content">
@@ -94,9 +100,12 @@
                     <span>Audio Prompts</span>
                 </div>
             </div>
-            
-            <!-- Users section will be inserted here by JavaScript -->
+            <div id="usersSection">
+                <h2>Users</h2>
+                <div id="userList" class="user-list"></div>
+            </div>
         </div>
+
 
         <div class="status-bar">
             <span id="connectionStatus">Disconnected</span>
@@ -104,21 +113,25 @@
         </div>
     </div>
 
-    
-<!-- Footer -->
-<footer class="footer">
-    <div class="footer-content">
-        <p>
-            <a href="https://broadcasting-coach.adult-webcam-faq.com" target="_blank">CB Broadcasting Coach</a> • 
-            <a href="https://github.com/honytsoi/CBBroadcastingCoach" target="_blank"><i class="fab fa-github"></i> GitHub</a> • 
-            <a href="https://x.com/honytsoi" target="_blank"><i class="fab fa-twitter"></i> Twitter</a>
-            <a href="https://chaturbate.com/ctmhhac/" target="_blank"><i class="fab fa-chaturbate"></i> My CB room</a>
-        </p>
-        <p class="copyright">© 2025 <a href="https://www.adult-webcam-faq.com/hony-tsoi.html">Hony</a> @ <a href="https://www.adult-webcam-faq.com/">Adult Webcam FAQ</a></p>
-    </div>
-</footer>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>
+                <a href="https://broadcasting-coach.adult-webcam-faq.com" target="_blank">CB Broadcasting Coach</a> •
+                <a href="https://github.com/honytsoi/CBBroadcastingCoach" target="_blank"><i class="fab fa-github"></i>
+                    GitHub</a> •
+                <a href="https://x.com/honytsoi" target="_blank"><i class="fab fa-twitter"></i> Twitter</a>
+                <a href="https://chaturbate.com/ctmhhac/" target="_blank"><i class="fab fa-chaturbate"></i> My CB
+                    room</a>
+            </p>
+            <p class="copyright">© 2025 <a href="https://www.adult-webcam-faq.com/hony-tsoi.html">Hony</a> @ <a
+                    href="https://www.adult-webcam-faq.com/">Adult Webcam FAQ</a></p>
+        </div>
+    </footer>
 
     <!-- Application Scripts -->
     <script type="module" src="src/app.js"></script>
 </body>
+
 </html>

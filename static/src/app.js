@@ -1,5 +1,5 @@
 // src/app.js
-import { initConfig, configState } from './config.js';
+import { initConfig, configState, clearLocalStorage } from './config.js';
 import { initQRScanner } from './qr-scanner.js';
 import * as CloudflareWorkerAPI from './api/cloudflareWorker.js';
 import UserManager from './user-manager.js';
@@ -42,9 +42,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add event listeners
     disconnectBtn.addEventListener('click', disconnectFromEventAPI);
     
-    // Make addActivityItem available globally for other modules
-    window.addActivityItem = addActivityItem;
-    
+// Make addActivityItem available globally for other modules
+window.addActivityItem = addActivityItem;
+
+// Add event listener for factory reset button
+document.getElementById('factoryReset').addEventListener('click', () => {
+    if (confirm('Are you sure you want to reset all settings? This action cannot be undone.')) {
+        clearLocalStorage();
+        window.location.reload();
+    }
+});
     // Setup users section
     setupUsersSection();
     
@@ -331,31 +338,22 @@ function processEvent(message) {
 }
 
 // Setup the users section in the UI
+// Configure the users section in the UI
 function setupUsersSection() {
-    // Create users section if it doesn't exist
-    if (!document.getElementById('usersSection')) {
-        // Create elements
-        usersSection = document.createElement('div');
-        usersSection.id = 'usersSection';
-        
-        const usersHeader = document.createElement('h2');
-        usersHeader.textContent = 'Users';
-        
-        userList = document.createElement('div');
-        userList.id = 'userList';
-        userList.className = 'user-list';
-        
-        // Assemble the section
-        usersSection.appendChild(usersHeader);
-        usersSection.appendChild(userList);
-        
-        // Always append to the main content for proper grid layout
-        document.querySelector('.main-content').appendChild(usersSection);
-        
-        // No need to add dynamic styles as they're already in main.css
-        console.log('Users section initialized and added to grid layout');
+    // Get the existing users section
+    usersSection = document.getElementById('usersSection');
+    userList = document.getElementById('userList');
+
+    if (usersSection && userList) {
+        // Show the section if it was hidden
+        usersSection.classList.remove('hidden');
+
+        // Initial UI update
+        updateUsersUI();
+        console.log('Users section configured and made visible');
+    } else {
+        console.error('Users section or user list not found in the DOM');
     }
-    
     // Initial UI update
     updateUsersUI();
 }

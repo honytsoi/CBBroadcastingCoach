@@ -17,7 +17,7 @@ const configState = {
         sayVoice: null, // Voice for "say" prompts (things to repeat)
         doVoice: null   // Voice for "do" prompts (instructions)
     },
-    
+
     // Method to update config
     updateConfig(newConfig) {
         this.config = { ...this.config, ...newConfig };
@@ -39,30 +39,30 @@ async function initConfig() {
     configToggle = document.getElementById('configToggle');
     configSection = document.getElementById('configSection');
     saveConfigBtn = document.getElementById('saveConfig');
-    
+
     // Initialize UserManager if it doesn't exist in window
     if (!window.userManager) {
         window.userManager = new UserManager();
     }
     userManager = window.userManager;
-    
+
     // Add event listeners
     configToggle.addEventListener('click', toggleConfig);
     saveConfigBtn.addEventListener('click', saveConfig);
     document.getElementById('testApiConnection').addEventListener('click', testApiConnection);
-    
+
     // Add voice selection UI
     addVoiceSelectionUI();
-    
+
     // Add data export/import UI
     addDataManagementUI();
-    
+
     // Load saved configuration
     loadConfig();
-    
+
     // Load AI models from backend
     await loadModels();
-    
+
     // Try to load session key from localStorage
     const sessionData = CloudflareWorkerAPI.loadSessionData();
     if (sessionData) {
@@ -89,7 +89,7 @@ function loadConfig() {
         try {
             const parsedConfig = JSON.parse(savedConfig);
             configState.config = { ...configState.config, ...parsedConfig };
-            
+
             // Don't populate aiModel here - it will be handled by modelLoader
             document.getElementById('scannedUrl').value = configState.config.scannedUrl || '';
             document.getElementById('broadcasterName').value = configState.config.broadcasterName || '';
@@ -100,7 +100,7 @@ function loadConfig() {
             console.error('Error loading saved configuration:', error);
         }
     }
-    
+
     // Return the loaded config
     return configState.config;
 }
@@ -113,12 +113,12 @@ async function saveConfig() {
     configState.config.promptLanguage = document.getElementById('promptLanguage').value;
     configState.config.promptDelay = parseInt(document.getElementById('promptDelay').value) || 5;
     configState.config.preferences = document.getElementById('preferences').value;
-    
+
     // Save voice selections
     const sayVoiceSelect = document.getElementById('sayVoiceSelect');
     const doVoiceSelect = document.getElementById('doVoiceSelect');
     const voices = speechSynthesis.getVoices();
-    
+
     // Update voice settings in config
     if (sayVoiceSelect.value) {
         const voiceIndex = parseInt(sayVoiceSelect.value);
@@ -129,7 +129,7 @@ async function saveConfig() {
         configState.config.sayVoiceName = null;
         configState.config.sayVoiceLang = null;
     }
-    
+
     if (doVoiceSelect.value) {
         const voiceIndex = parseInt(doVoiceSelect.value);
         configState.config.doVoiceName = voices[voiceIndex].name;
@@ -155,7 +155,7 @@ async function saveConfig() {
     localStorage.setItem('chatCoachConfig', JSON.stringify(configState.config));
     window.addActivityItem('Configuration saved', 'event');
     configSection.classList.add('hidden');
-    
+
     // Return the updated config
     return configState.config;
 }
@@ -194,13 +194,13 @@ function addVoiceSelectionUI() {
         </div>
         <div id="voiceLoadingStatus" style="margin-top: 10px;"></div>
     `;
-    
+
     // Add the voice section to the settings section
     settingsSection.appendChild(voiceSection);
-    
+
     // Initialize voice selects
     initVoiceSelects();
-    
+
     // Add test button event listeners
     document.getElementById('testSayVoice').addEventListener('click', () => testVoice('say'));
     document.getElementById('testDoVoice').addEventListener('click', () => testVoice('do'));
@@ -210,34 +210,34 @@ function addVoiceSelectionUI() {
 function initVoiceSelects() {
     const voiceLoadingStatus = document.getElementById('voiceLoadingStatus');
     voiceLoadingStatus.textContent = 'Loading available voices...';
-    
+
     // Function to populate voice selects
     function populateVoiceSelects() {
         const voices = speechSynthesis.getVoices();
         const saySelect = document.getElementById('sayVoiceSelect');
         const doSelect = document.getElementById('doVoiceSelect');
-        
+
         if (voices.length === 0) {
             voiceLoadingStatus.textContent = 'No voices available. Try reloading the page.';
             return;
         }
-        
+
         voiceLoadingStatus.textContent = `${voices.length} voices available.`;
-        
+
         // Clear and populate both selects
         [saySelect, doSelect].forEach(select => {
             // Save the current selected value if any
             const currentValue = select.value;
-            
+
             // Clear options
             select.innerHTML = '';
-            
+
             // Add default option
             const defaultOption = document.createElement('option');
             defaultOption.value = '';
             defaultOption.textContent = 'Default Voice';
             select.appendChild(defaultOption);
-            
+
             // Add voice options
             voices.forEach((voice, index) => {
                 const option = document.createElement('option');
@@ -245,33 +245,33 @@ function initVoiceSelects() {
                 option.textContent = `${voice.name} (${voice.lang})`;
                 select.appendChild(option);
             });
-            
+
             // Restore the previous value if it exists
             if (currentValue) {
                 select.value = currentValue;
             }
         });
-        
+
         // Try to select saved voices by name and language
         if (configState.config.sayVoiceName) {
-            const sayVoiceIndex = voices.findIndex(voice => 
-                voice.name === configState.config.sayVoiceName && 
+            const sayVoiceIndex = voices.findIndex(voice =>
+                voice.name === configState.config.sayVoiceName &&
                 voice.lang === configState.config.sayVoiceLang
             );
-            
+
             if (sayVoiceIndex >= 0) {
                 saySelect.value = sayVoiceIndex;
                 // Also set the actual voice object for immediate use
                 configState.config.sayVoice = voices[sayVoiceIndex];
             }
         }
-        
+
         if (configState.config.doVoiceName) {
-            const doVoiceIndex = voices.findIndex(voice => 
-                voice.name === configState.config.doVoiceName && 
+            const doVoiceIndex = voices.findIndex(voice =>
+                voice.name === configState.config.doVoiceName &&
                 voice.lang === configState.config.doVoiceLang
             );
-            
+
             if (doVoiceIndex >= 0) {
                 doSelect.value = doVoiceIndex;
                 // Also set the actual voice object for immediate use
@@ -279,22 +279,22 @@ function initVoiceSelects() {
             }
         }
     }
-    
+
     // Try to load voices
     populateVoiceSelects();
-    
+
     // Set up the event to load voices when they change
     if (speechSynthesis.onvoiceschanged !== undefined) {
         speechSynthesis.onvoiceschanged = populateVoiceSelects;
     }
-    
+
     // Add change event listeners to save voice selections
     document.getElementById('sayVoiceSelect').addEventListener('change', (e) => {
         const voices = speechSynthesis.getVoices();
         const selectedIndex = e.target.value;
         configState.config.sayVoice = selectedIndex ? voices[selectedIndex] : null;
     });
-    
+
     document.getElementById('doVoiceSelect').addEventListener('change', (e) => {
         const voices = speechSynthesis.getVoices();
         const selectedIndex = e.target.value;
@@ -307,27 +307,27 @@ function testVoice(voiceType) {
     const selectId = voiceType === 'say' ? 'sayVoiceSelect' : 'doVoiceSelect';
     const select = document.getElementById(selectId);
     const selectedIndex = select.value;
-    
+
     if (!selectedIndex) {
         // Using default voice
         const utterance = new SpeechSynthesisUtterance(
-            voiceType === 'say' 
-                ? 'This is the default "Say" voice test. Repeat this aloud.' 
+            voiceType === 'say'
+                ? 'This is the default "Say" voice test. Repeat this aloud.'
                 : 'This is the default "Do" voice test. This would be an instruction.'
         );
         utterance.lang = configState.config.promptLanguage;
         speechSynthesis.speak(utterance);
         return;
     }
-    
+
     const voices = speechSynthesis.getVoices();
     const selectedVoice = voices[selectedIndex];
-    
+
     if (selectedVoice) {
-        const sampleText = voiceType === 'say' 
-            ? 'This is the "Say" voice test. Repeat this aloud.' 
+        const sampleText = voiceType === 'say'
+            ? 'This is the "Say" voice test. Repeat this aloud.'
             : 'This is the "Do" voice test. This would be an instruction.';
-        
+
         const utterance = new SpeechSynthesisUtterance(sampleText);
         utterance.voice = selectedVoice;
         speechSynthesis.speak(utterance);
@@ -353,26 +353,29 @@ function addDataManagementUI() {
                 <button id="importData" class="action-button">Import Data</button>
             </div>
         </div>
-        <div class="settings-row hidden" id="importOptions">
-            <label>Import Options:</label>
-            <div class="checkbox-group">
-                <input type="checkbox" id="mergeData" name="mergeData">
-                <label for="mergeData">Merge with existing data</label>
-            </div>
-        </div>
+<div class="settings-row hidden" id="importOptions">
+    <label>Import Options:</label>
+    <div class="checkbox-group">
+        <label class="switch">
+            <input type="checkbox" id="mergeData" name="mergeData">
+            <span class="slider round"></span>
+        </label>
+        <span>Merge with existing data</span>
+    </div>
+</div>
         <div id="dataManagementResult" class="result-box hidden"></div>
     `;
-    
+
     // Add the data section to the settings section
     settingsSection.appendChild(dataSection);
-    
+
     // Get DOM elements
     const exportButton = document.getElementById('exportData');
     const importButton = document.getElementById('importData');
     const dataResult = document.getElementById('dataManagementResult');
     const importOptions = document.getElementById('importOptions');
     const mergeCheckbox = document.getElementById('mergeData');
-    
+
     // Add event listeners
     exportButton.addEventListener('click', () => {
         try {
@@ -382,12 +385,12 @@ function addDataManagementUI() {
             a.href = url;
             a.download = `broadcasting-coach-data-${new Date().toISOString().slice(0,10)}.json`;
             a.click();
-            
+
             // Show success message
             dataResult.textContent = 'Data exported successfully!';
             dataResult.style.backgroundColor = '#d4edda';
             dataResult.classList.remove('hidden');
-            
+
             // Hide after 3 seconds
             setTimeout(() => {
                 dataResult.classList.add('hidden');
@@ -399,20 +402,20 @@ function addDataManagementUI() {
             dataResult.classList.remove('hidden');
         }
     });
-    
+
     importButton.addEventListener('click', () => {
         // Toggle import options
         importOptions.classList.toggle('hidden');
-        
+
         // Show file picker
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
-        
+
         input.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            
+
             // Check file size
             if (file.size > 10 * 1024 * 1024) {
                 dataResult.textContent = 'File size exceeds 10MB limit';
@@ -420,26 +423,26 @@ function addDataManagementUI() {
                 dataResult.classList.remove('hidden');
                 return;
             }
-            
+
             // Read file
             const reader = new FileReader();
             reader.onload = (event) => {
                 try {
                     // Get file content
                     const fileContent = event.target.result;
-                    
+
                     // Confirm import
                     if (confirm('This will replace your current data. Are you sure you want to proceed?')) {
                         // Import data
                         const mergeMode = mergeCheckbox.checked;
                         const result = userManager.importData(fileContent, configState, mergeMode);
-                        
+
                         if (result.success) {
                             // Show success message
                             dataResult.textContent = result.message;
                             dataResult.style.backgroundColor = '#d4edda';
                             dataResult.classList.remove('hidden');
-                            
+
                             // Reload page after short delay
                             setTimeout(() => {
                                 window.location.reload();
@@ -458,16 +461,16 @@ function addDataManagementUI() {
                     dataResult.classList.remove('hidden');
                 }
             };
-            
+
             reader.onerror = () => {
                 dataResult.textContent = 'Error reading file';
                 dataResult.style.backgroundColor = '#f8d7da';
                 dataResult.classList.remove('hidden');
             };
-            
+
             reader.readAsText(file);
         });
-        
+
         input.click();
     });
 }
@@ -532,12 +535,22 @@ async function testApiConnection() {
     }
 }
 
+// Factory reset function to clear all local storage
+function clearLocalStorage() {
+    localStorage.removeItem('chatCoachConfig');
+    localStorage.removeItem('broadcastCoachUsers');
+    localStorage.removeItem('broadcastCoachBackup');
+    localStorage.removeItem('chatCoachSession');
+    window.addActivityItem('Local storage cleared', 'event');
+}
+
 // Export functions and state
-export { 
-    initConfig, 
-    loadConfig, 
-    saveConfig, 
-    toggleConfig, 
-    testApiConnection, 
-    configState 
+export {
+    initConfig,
+    loadConfig,
+    saveConfig,
+    toggleConfig,
+    testApiConnection,
+    configState,
+    clearLocalStorage
 };

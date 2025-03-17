@@ -5,13 +5,11 @@
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
 body {
     background-color: #f5f5f5;
     color: #333;
     line-height: 1.6;
 }
-
 .app-container {
     max-width: 100%;
     margin: 0 auto;
@@ -19,13 +17,6 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-}
-
-@media (min-width: 1200px) {
-    .app-container {
-        max-width: 1600px;
-        padding: 1.5rem 2rem;
-    }
 }
 
 /* Header Styles */
@@ -37,180 +28,62 @@ header {
     border-bottom: 1px solid #ddd;
     margin-bottom: 1rem;
 }
-
 h1 {
     font-size: 1.8rem;
     color: #333;
 }
-
-h2 {
-    font-size: 1.4rem;
-    margin-bottom: 1rem;
-    color: #444;
+.config-section.hidden {
+    display: none;
 }
 
-/* Button Styles */
-.btn {
-    padding: 0.8rem 1.5rem;
-    border: none;
-    border-radius: 4px;
-    background-color: #f0f0f0;
-    color: #333;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    font-weight: bold;
-}
-
-.btn:hover {
-    background-color: #e0e0e0;
-}
-
-.btn.primary {
-    background-color: #4a90e2;
-    color: white;
-}
-
-.btn.primary:hover {
-    background-color: #3a80d2;
-}
-
-/* Config Section */
-.config-section {
+/* Footer Styles */
+.footer {
     background-color: white;
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1.5rem;
+    margin-top: 1.5rem;
+    text-align: center;
 }
-
-.form-group {
-    margin-bottom: 1rem;
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
 }
-
-label {
-    display: block;
-    margin-bottom: 0.5rem;
+.footer a {
+    color: #4a90e2;
+    text-decoration: none;
     font-weight: bold;
+    transition: color 0.3s;
+}
+.footer a:hover {
+    color: #3a80d2;
+    text-decoration: underline;
+}
+.copyright {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+@media (max-width: 600px) {
+    .footer {
+        padding: 1rem;
+    }
 }
 
-input, select, textarea {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-}
-
-textarea {
-    min-height: 100px;
-    resize: vertical;
-}
-
-/* Main Content */
+/* Main Content Container */
 .main-content {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Single column layout by default */
     gap: 1.5rem;
     flex-grow: 1;
 }
 
-/* Tablet layout */
-@media (min-width: 768px) and (max-width: 1199px) {
-    .main-content {
-        grid-template-columns: 1fr 1fr;
-    }
-    
-    .scanner-section {
-        grid-column: 1 / -1;
-    }
-}
-
-/* Desktop layout */
-@media (min-width: 1200px) {
-    .main-content {
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: auto 1fr;
-        gap: 2rem;
-    }
-    
-    .scanner-section {
-        grid-column: 1 / -1;
-        grid-row: 1;
-        margin-bottom: 1rem;
-    }
-    
-    .activity-section {
-        grid-column: 1;
-        grid-row: 2;
-    }
-    
-    .prompt-section {
-        grid-column: 2;
-        grid-row: 2;
-        position: relative;
-    }
-    
-    /* Add subtle divider between sections */
-    .prompt-section::before,
-    .prompt-section::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        background-color: #e0e0e0;
-    }
-    
-    .prompt-section::before {
-        left: -1rem;
-    }
-    
-    .prompt-section::after {
-        right: -1rem;
-    }
-    
-    #usersSection {
-        grid-column: 3;
-        grid-row: 2;
-        margin: 0;
-    }
-}
-
-/* Scanner Section */
-.scanner-section {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
-#qrScannerContainer {
-    position: relative;
-    width: 100%;
-    max-width: 500px;
-    margin: 0 auto 1rem;
-    overflow: hidden;
-    border-radius: 8px;
-}
-
-#qrScanner {
-    width: 100%;
-    height: auto;
-    background-color: #000;
-}
-
-#qrCanvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-
-/* Activity and Prompt Sections */
-.activity-section, .prompt-section {
+/* Activity, Prompt, and Users Sections */
+.activity-section,
+.prompt-section,
+#usersSection {
     background-color: white;
     padding: 1.5rem;
     border-radius: 8px;
@@ -219,6 +92,18 @@ textarea {
     flex-direction: column;
 }
 
+/* Section Titles */
+.activity-section h2,
+.prompt-section h2,
+#usersSection h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    color: #444;
+    border-bottom: 2px solid #4a90e2;
+    padding-bottom: 0.75rem;
+}
+
+/* Feed Styling */
 .feed {
     flex-grow: 1;
     overflow-y: auto;
@@ -230,59 +115,26 @@ textarea {
     margin-bottom: 1rem;
 }
 
-/* Increase feed height on desktop */
-@media (min-width: 1200px) {
-    .feed {
-        max-height: 500px;
-    }
-    
-    /* Ensure all sections have consistent height */
-    .activity-section,
-    .prompt-section,
-    #usersSection {
-        height: calc(100vh - 280px);
-        min-height: 400px;
-        transition: all 0.3s ease;
-    }
-    
-    .user-list {
-        max-height: calc(100% - 60px);
-    }
-    
-    /* Enhance section titles for better visual hierarchy */
-    .activity-section h2,
-    .prompt-section h2,
-    #usersSection h2 {
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid #4a90e2;
-        margin-bottom: 1.25rem;
-    }
-}
-
+/* Feed Items */
 .feed-item {
     padding: 0.8rem;
     border-bottom: 1px solid #eee;
     font-size: 1rem;
 }
-
 .feed-item:last-child {
     border-bottom: none;
 }
-
 .feed-item.event {
     color: #666;
     font-style: italic;
 }
-
 .feed-item.chat {
     color: #333;
 }
-
 .feed-item.tip {
     color: #28a745;
     font-weight: bold;
 }
-
 .feed-item.prompt {
     position: relative;
     color: #4a90e2;
@@ -290,100 +142,11 @@ textarea {
     padding-left: 50px; /* Make space for the voice indicator */
 }
 
-/* Specific styling for "say" prompts */
-.feed-item.say-prompt {
-    background-color: #f0f7ff;
-    color: #0066cc;
-    border-left: 4px solid #0066cc;
-}
-
-/* Specific styling for "do" prompts */
-.feed-item.do-prompt {
-    background-color: #f6f6f6;
-    color: #444;
-    border-left: 4px solid #666;
-}
-
-.voice-indicator {
-    position: absolute;
-    left: 8px;
-    top: 8px;
-    font-size: 0.9rem;
-    background-color: rgba(255, 255, 255, 0.7);
-    padding: 2px 4px;
-    border-radius: 4px;
-    font-weight: bold;
-}
-
-.say-prompt .voice-indicator {
-    color: #0066cc;
-}
-
-.do-prompt .voice-indicator {
-    color: #444;
-}
-
 /* Audio Controls */
 .audio-controls {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-}
-
-/* Toggle Switch */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 34px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 26px;
-    width: 26px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-}
-
-input:checked + .slider {
-    background-color: #4a90e2;
-}
-
-input:focus + .slider {
-    box-shadow: 0 0 1px #4a90e2;
-}
-
-input:checked + .slider:before {
-    transform: translateX(26px);
-}
-
-.slider.round {
-    border-radius: 34px;
-}
-
-.slider.round:before {
-    border-radius: 50%;
 }
 
 /* Status Bar */
@@ -397,157 +160,61 @@ input:checked + .slider:before {
     color: #666;
 }
 
-/* Utility Classes */
-.hidden {
-    display: none !important;
-}
 
-/* Data Management Styles */
-.button-group {
-    display: flex;
-    gap: 10px;
-}
 
-.action-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.action-button:hover {
-    background-color: #0056b3;
-}
-
-.result-box {
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.settings-group {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #eee;
-}
-
-.settings-group h3 {
-    margin-bottom: 10px;
-    color: #333;
-}
-
-/* Responsive adjustments for mobile */
-@media (max-width: 600px) {
-    h1 {
-        font-size: 1.5rem;
-    }
-    
-    .btn {
-        padding: 0.7rem 1.2rem;
-        font-size: 0.9rem;
-    }
-    
-    .feed {
-        max-height: 200px;
-    }
-}
-
-/* Users Section Styles */
-#usersSection {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    margin: 15px 0;
-}
-
+/* User List */
 .user-list {
-    max-height: 300px;
+    flex-grow: 1;
     overflow-y: auto;
+    max-height: 100%;
     border: 1px solid #eee;
     border-radius: 4px;
     background-color: #fafafa;
+    margin-bottom: 1rem;
 }
 
+/* User Item */
 .user-item {
     margin-bottom: 8px;
     border: 1px solid #e0e0e0;
     border-radius: 4px;
     overflow: hidden;
+    transition: box-shadow 0.3s;
+}
+.user-item:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Hover effect */
 }
 
+/* User Summary */
 .user-summary {
-    padding: 8px 12px;
+    padding: 12px;
     background-color: #f0f0f0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
+    transition: background-color 0.3s;
 }
-
+.user-summary:hover {
+    background-color: #e0e0e0; /* Slightly darker on hover */
+}
 .user-summary.online {
     background-color: #d4edda;
-    border-left: 4px solid #28a745;
+    border-left: 4px solid #28a745; /* Green indicator for online users */
 }
-
-.user-details {
-    display: none;
-    padding: 10px;
-    background-color: white;
-    border-top: 1px solid #e0e0e0;
-}
-
-.user-details.expanded {
-    display: block;
-}
-
-.detail-row {
-    margin-bottom: 5px;
-    display: flex;
-}
-
-.detail-row label {
-    font-weight: bold;
-    width: 140px;
-    flex-shrink: 0;
-}
-
-.recent-messages {
-    margin: 5px 0;
-    padding-left: 20px;
-    max-height: 100px;
-    overflow-y: auto;
-}
-
-.no-users {
-    padding: 15px;
-    text-align: center;
-    color: #666;
-    font-style: italic;
-}
-
 .user-summary .username {
     font-weight: bold;
+    color: #333;
 }
-
 .user-summary .status {
+    font-size: 0.9rem;
     color: #666;
 }
-
 .user-summary .status.online {
-    color: #28a745;
+    color: #28a745; /* Green text for online status */
 }
 
+/* Expand Button */
 .expand-button {
     background: none;
     border: none;
@@ -555,45 +222,490 @@ input:checked + .slider:before {
     font-size: 12px;
     color: #666;
     padding: 0 5px;
+    transition: color 0.3s;
+}
+.expand-button:hover {
+    color: #333; /* Darker color on hover */
 }
 
-/* Footer Styles */
-.footer {
+/* User Details */
+.user-details {
+    display: none;
+    padding: 12px;
+    background-color: white;
+    border-top: 1px solid #e0e0e0;
+}
+.user-details.expanded {
+    display: block;
+}
+
+/* Detail Row */
+.detail-row {
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+.detail-row label {
+    font-weight: bold;
+    width: 140px;
+    flex-shrink: 0;
+    color: #444;
+}
+.detail-row span {
+    color: #333;
+}
+
+/* Recent Messages */
+.recent-messages {
+    margin: 8px 0;
+    padding-left: 20px;
+    max-height: 100px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+/* No Users Message */
+.no-users {
+    padding: 15px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    font-size: 1rem;
+}
+
+/* Tablet and Desktop Layout */
+@media (min-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr 1fr; /* Two columns */
+        gap: 2rem;
+    }
+    .scanner-section {
+        grid-column: 1 / -1; /* Span all columns */
+        margin-bottom: 1.5rem;
+    }
+    .activity-section {
+        grid-column: 1; /* First column */
+    }
+    .prompt-section {
+        grid-column: 2; /* Second column */
+    }
+    #usersSection {
+        grid-column: 1 / -1; /* Span all columns */
+        margin-top: 1.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .feed {
+        max-height: 400px; /* Increase feed height for tablets and desktops */
+    }
+}
+
+
+@media (min-width: 768px) {
+    .activity-section,
+    .prompt-section {
+        height: calc(100vh - 300px); /* Adjust based on header/footer height */
+        min-height: 400px;
+        transition: all 0.3s ease;
+    }
+}
+
+
+/* Scanner Section */
+.scanner-section {
     background-color: white;
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    margin-top: 1.5rem;
     text-align: center;
 }
+#qrScannerContainer {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto 1rem;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+#qrScanner {
+    width: 100%;
+    height: auto;
+    background-color: #000;
+    border-radius: 8px;
+}
+#qrCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Ensure canvas doesn't block interactions */
+}
+#startScan {
+    margin-top: 1rem;
+}
+#scanResult {
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: #333;
+}
+#apiEndpoint {
+    font-weight: bold;
+    color: #4a90e2;
+}
 
-.footer-content {
+
+/* Scanner Buttons */
+#startScan {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #4a90e2; /* Primary blue color */
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: bold;
+}
+#startScan:hover {
+    background-color: #3a80d2; /* Darker blue on hover */
+}
+
+#disconnect {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #e74c3c; /* Red color for disconnect */
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: bold;
+}
+#disconnect:hover {
+    background-color: #c0392b; /* Darker red on hover */
+}
+
+/* Scan Result Text */
+#scanResult {
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: #333;
+}
+#apiEndpoint {
+    font-weight: bold;
+    color: #4a90e2;
+}
+
+
+/* Settings Button */
+#configToggle {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #ff9f43; /* Warm orange color */
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    font-weight: bold;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem; /* Space between icon and text */
+}
+#configToggle:hover {
+    background-color: #e68a3b; /* Darker orange on hover */
+    transform: scale(1.05); /* Slight zoom effect */
+}
+#configToggle:active {
+    transform: scale(0.95); /* Slight shrink effect on click */
+}
+
+
+/* Config Section */
+.config-section {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.3s;
+}
+.config-section:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); /* Subtle hover effect */
+}
+
+/* Form Group */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #444;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #4a90e2; /* Highlight on focus */
+    outline: none;
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.5); /* Soft glow effect */
+}
+
+/* Textarea Adjustments */
+textarea {
+    min-height: 120px;
+    resize: vertical; /* Allow vertical resizing */
+}
+
+/* Buttons in Config Section */
+#saveConfig,
+#testApiConnection {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+#saveConfig {
+    background-color: #4a90e2;
+    color: white;
+}
+#saveConfig:hover {
+    background-color: #3a80d2;
+    transform: scale(1.05);
+}
+#testApiConnection {
+    background-color: #ff9f43;
+    color: white;
+}
+#testApiConnection:hover {
+    background-color: #e68a3b;
+    transform: scale(1.05);
+}
+
+/* API Test Result */
+#apiTestResult {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #333;
+    background-color: #f0f7ff;
+    border: 1px solid #cce5ff;
+}
+#apiTestResult.success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+#apiTestResult.error {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+/* Factory Reset Button */
+#factoryReset {
+    margin-top: 1.5rem;
+    padding: 0.7rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #e74c3c;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    font-weight: bold;
+}
+#factoryReset:hover {
+    background-color: #c0392b;
+    transform: scale(1.05);
+}
+
+
+/* Voice Selection Dropdowns */
+#sayVoiceSelect,
+#doVoiceSelect {
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: white;
+    color: #333;
+    transition: border-color 0.3s;
+}
+#sayVoiceSelect:focus,
+#doVoiceSelect:focus {
+    border-color: #4a90e2;
+    outline: none;
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+}
+
+/* Voice Test Buttons */
+.voice-test-button {
+    padding: 0.7rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
+#testSayVoice {
+    background-color: #0066cc;
+    color: white;
+}
+#testSayVoice:hover {
+    background-color: #004c99;
+    transform: scale(1.05);
+}
+#testDoVoice {
+    background-color: #444;
+    color: white;
+}
+#testDoVoice:hover {
+    background-color: #333;
+    transform: scale(1.05);
+}
+
+/* Data Management Section */
+.data-management {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+.data-management h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: #444;
+    border-bottom: 2px solid #4a90e2;
+    padding-bottom: 0.5rem;
+}
+.button-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.action-button {
+    padding: 0.7rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    font-weight: bold;
+}
+#exportDataButton {
+    background-color: #28a745;
+    color: white;
+}
+#exportDataButton:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+}
+#importDataButton {
+    background-color: #ffc107;
+    color: black;
+}
+#importDataButton:hover {
+    background-color: #e0a800;
+    transform: scale(1.05);
+}
+.checkbox-group {
+    display: flex;
     align-items: center;
     gap: 0.5rem;
 }
-
-.footer a {
-    color: #4a90e2;
-    text-decoration: none;
-    font-weight: bold;
-    transition: color 0.3s;
+.checkbox-group label {
+    font-size: 1rem;
+    color: #444;
+}
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #4a90e2;
+}
+.result-box {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 4px;
+    background-color: #f0f7ff;
+    border: 1px solid #cce5ff;
+    color: #333;
+    font-size: 1rem;
+}
+.result-box.error {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
 }
 
-.footer a:hover {
-    color: #3a80d2;
-    text-decoration: underline;
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
 }
-
-.copyright {
-    font-size: 0.9rem;
-    color: #666;
-    margin-top: 0.5rem;
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
-
-@media (max-width: 600px) {
-    .footer {
-        padding: 1rem;
-    }
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+}
+input:checked + .slider {
+    background-color: #4a90e2; /* Primary blue color */
+}
+input:focus + .slider {
+    box-shadow: 0 0 1px #4a90e2;
+}
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+.slider.round {
+    border-radius: 34px;
+}
+.slider.round:before {
+    border-radius: 50%;
 }
