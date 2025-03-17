@@ -1,11 +1,13 @@
 // Configuration handling for Broadcasting Real-Time Coach
 import CloudflareWorkerAPI from './api/cloudflareWorker.js';
 import UserManager from './user-manager.js';
+import { DEFAULT_MODEL } from './models.js';
+import { loadModels } from './modelLoader.js';
 
 // App State - Configuration related
 const configState = {
     config: {
-        aiModel: '@cf/meta/llama-3.2-1b-instruct',
+        aiModel: DEFAULT_MODEL,
         broadcasterName: '',
         promptLanguage: 'en-US',
         promptDelay: 5,
@@ -58,6 +60,9 @@ async function initConfig() {
     // Load saved configuration
     loadConfig();
     
+    // Load AI models from backend
+    await loadModels();
+    
     // Try to load session key from localStorage
     const sessionData = CloudflareWorkerAPI.loadSessionData();
     if (sessionData) {
@@ -85,8 +90,7 @@ function loadConfig() {
             const parsedConfig = JSON.parse(savedConfig);
             configState.config = { ...configState.config, ...parsedConfig };
             
-            // Populate form fields
-            document.getElementById('aiModel').value = configState.config.aiModel || '@cf/meta/llama-3.2-1b-instruct';
+            // Don't populate aiModel here - it will be handled by modelLoader
             document.getElementById('scannedUrl').value = configState.config.scannedUrl || '';
             document.getElementById('broadcasterName').value = configState.config.broadcasterName || '';
             document.getElementById('promptLanguage').value = configState.config.promptLanguage || 'en-US';

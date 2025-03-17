@@ -1,6 +1,12 @@
 // src/api/cloudflareWorker.js
+import { AI_MODELS, DEFAULT_MODEL } from '../models.js';
+
 const AI_API_ENDPOINT = '/api/generate-prompt'; // Relative URL!
 const SESSION_KEY_ENDPOINT = '/api/get-session-key'; // Session key endpoint
+const GET_MODELS_ENDPOINT = '/api/get-models'; // Models endpoint
+
+// Extract approved model IDs for validation
+const APPROVED_MODELS = AI_MODELS.map(model => model.id);
 
 let aiState = {
     isGeneratingPrompt: false,
@@ -146,9 +152,8 @@ async function generateCoachingPrompt(config, context, onPromptGenerated) {
     aiState.isGeneratingPrompt = true;
     try {
         // Validate the AI model
-        const APPROVED_MODELS = ['@cf/meta/llama-3.2-1b-instruct'];
         if (!APPROVED_MODELS.includes(config.aiModel)) {
-            throw new Error(`AI model ${config.aiModel} is not approved. Only @cf/meta/llama-3.2-1b-instruct is currently supported.`);
+            throw new Error(`AI model ${config.aiModel} is not approved. Please select from the approved model list.`);
         }
         
         // Ensure we have a valid session key
@@ -230,9 +235,28 @@ async function generateCoachingPrompt(config, context, onPromptGenerated) {
     }
 }
 
+/**
+ * Fetch the available AI models from the backend
+ */
+async function getAvailableModels() {
+    try {
+        const response = await fetch(GET_MODELS_ENDPOINT);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching AI models:', error);
+        // Return local models as fallback
+        return AI_MODELS;
+    }
+}
+
 export default {
     generateCoachingPrompt,
     getSessionKey,
     loadSessionData,
-    saveSessionData
+    saveSessionData,
+    getAvailableModels
 };
