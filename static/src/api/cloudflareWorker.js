@@ -1,12 +1,10 @@
 // src/api/cloudflareWorker.js
-import { AI_MODELS, DEFAULT_MODEL } from '../models.js';
-
 const AI_API_ENDPOINT = '/api/generate-prompt'; // Relative URL!
 const SESSION_KEY_ENDPOINT = '/api/get-session-key'; // Session key endpoint
 const GET_MODELS_ENDPOINT = '/api/get-models'; // Models endpoint
 
-// Extract approved model IDs for validation
-const APPROVED_MODELS = AI_MODELS.map(model => model.id);
+// We'll fetch the approved models from the backend
+let APPROVED_MODELS = [];
 
 let aiState = {
     isGeneratingPrompt: false,
@@ -151,8 +149,8 @@ async function generateCoachingPrompt(config, context, onPromptGenerated) {
 
     aiState.isGeneratingPrompt = true;
     try {
-        // Validate the AI model
-        if (!APPROVED_MODELS.includes(config.aiModel)) {
+        // Validate the AI model if we have APPROVED_MODELS loaded
+        if (APPROVED_MODELS.length > 0 && !APPROVED_MODELS.includes(config.aiModel)) {
             throw new Error(`AI model ${config.aiModel} is not approved. Please select from the approved model list.`);
         }
         
@@ -245,11 +243,14 @@ async function getAvailableModels() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        return await response.json();
+        const models = await response.json();
+        // Update APPROVED_MODELS for validation
+        APPROVED_MODELS = models.map(model => model.id);
+        return models;
     } catch (error) {
         console.error('Error fetching AI models:', error);
-        // Return local models as fallback
-        return AI_MODELS;
+        // Return empty array as we no longer have local fallback
+        return [];
     }
 }
 

@@ -1,21 +1,5 @@
-// AI model configuration
-const AI_MODELS = [
-  {
-    id: '@cf/meta/llama-3.2-1b-instruct',
-    provider: 'Cloudflare-Worker-AI',
-    name: 'Llama 3.2 1B',
-    description: 'Cheapest option, good for basic prompts'
-  },
-  {
-    id: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-    provider: 'Cloudflare-Worker-AI',
-    name: 'Llama 3.3 70B FP8 Fast',
-    description: 'Fastest option, best for complex prompts'
-  }
-];
-
-// Get list of approved model IDs 
-const APPROVED_MODELS = AI_MODELS.map(model => model.id);
+// Import AI model configuration from centralized source
+const { AI_MODELS, DEFAULT_MODEL, APPROVED_MODELS } = require('./models.js');
 
 const promptTemplate = `
 You are a real-time coach for a Chaturbate broadcaster named {{broadcaster}}. 
@@ -228,6 +212,8 @@ export default {
           prompt: finalPrompt,
         });
 
+        // double escaping of special characters is happening here; test_user becomes test\\_user
+
         console.log('AI response:', aiResponse);
 
         const parseResponse = (response) => {
@@ -238,7 +224,11 @@ export default {
             const startIndex = responseText.indexOf('{');
             const endIndex = responseText.lastIndexOf('}');
             if (startIndex !== -1 && endIndex !== -1) {
-              const cleanedResponseText = responseText.substring(startIndex, endIndex + 1);
+              
+              // trim  to open close braqckets look for extraneous double backslashes and remove them
+              const cleanedResponseText = responseText.substring(startIndex, endIndex + 1).replace(/\\\\/g, '\\');;
+
+
               const parsed = JSON.parse(cleanedResponseText);
               return {
                 action: parsed.action || 'unknown',

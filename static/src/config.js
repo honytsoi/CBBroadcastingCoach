@@ -1,13 +1,13 @@
 // Configuration handling for Broadcasting Real-Time Coach
 import CloudflareWorkerAPI from './api/cloudflareWorker.js';
 import UserManager from './user-manager.js';
-import { DEFAULT_MODEL } from './models.js';
 import { loadModels } from './modelLoader.js';
 
 // App State - Configuration related
 const configState = {
     config: {
-        aiModel: DEFAULT_MODEL,
+        aiModel: null, // Will be populated after loading models from backend
+
         broadcasterName: '',
         promptLanguage: 'en-US',
         promptDelay: 5,
