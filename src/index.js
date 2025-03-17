@@ -195,13 +195,24 @@ function simpleHash(input) {
   
 		  const parseResponse = (response) => {
 			try {
-			  const parsed = JSON.parse(response.response);
-			  return {
-				action: parsed.action || 'unknown',
-				content: parsed.content || 'No suggestion available.',
-			  };
+			  const responseText = response.response; // Get the actual text from the response
+			  
+			  // Basic text processing to clean the response text
+			  const startIndex = responseText.indexOf('{');
+			  const endIndex = responseText.lastIndexOf('}');
+			  if (startIndex !== -1 && endIndex !== -1) {
+				const cleanedResponseText = responseText.substring(startIndex, endIndex + 1);
+				const parsed = JSON.parse(cleanedResponseText);
+				return {
+				  action: parsed.action || 'unknown',
+				  content: parsed.content || 'No suggestion available.',
+				};
+			  } else {
+				throw new Error('Invalid JSON format');
+			  }
 			} catch (error) {
 			  console.error('Error parsing AI response:', error);
+			  console.log('Raw AI response text:', response.response); // Log the actual text if an error occurs
 			  return {
 				action: 'unknown',
 				content: 'Error parsing AI response.',
