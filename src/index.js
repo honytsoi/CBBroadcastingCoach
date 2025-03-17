@@ -155,7 +155,7 @@ function simpleHash(input) {
   
 		  console.log('Preparing prompt template...');
 		  // Use only the approved model
-		  const APPROVED_MODELS = ['@cf/meta/llama-3.2-1b-instruct'];
+		  const APPROVED_MODELS = ['@cf/meta/llama-3.2-1b-instruct','@cf/meta/llama-3.3-70b-instruct-fp8-fast'];
 		  const requestedModel = aimodel || '@cf/meta/llama-3.2-1b-instruct';
 		  
 		  // Validate the model
