@@ -114,35 +114,38 @@ async function saveConfig() {
     configState.config.promptDelay = parseInt(document.getElementById('promptDelay').value) || 5;
     configState.config.preferences = document.getElementById('preferences').value;
 
-    // Save voice selections
+    // Save voice selections with null checks
     const sayVoiceSelect = document.getElementById('sayVoiceSelect');
     const doVoiceSelect = document.getElementById('doVoiceSelect');
-    const voices = speechSynthesis.getVoices();
+    const voices = speechSynthesis.getVoices() || [];
 
     // Update voice settings in config
-    if (sayVoiceSelect.value) {
+    if (sayVoiceSelect.value && voices.length > 0) {
         const voiceIndex = parseInt(sayVoiceSelect.value);
-        // We need to store the voice name and language since the actual SpeechSynthesisVoice object can't be serialized
-        configState.config.sayVoiceName = voices[voiceIndex].name;
-        configState.config.sayVoiceLang = voices[voiceIndex].lang;
+        if (voiceIndex >= 0 && voiceIndex < voices.length) {
+            configState.config.sayVoiceName = voices[voiceIndex].name;
+            configState.config.sayVoiceLang = voices[voiceIndex].lang;
+        }
     } else {
         configState.config.sayVoiceName = null;
         configState.config.sayVoiceLang = null;
     }
 
-    if (doVoiceSelect.value) {
+    if (doVoiceSelect.value && voices.length > 0) {
         const voiceIndex = parseInt(doVoiceSelect.value);
-        configState.config.doVoiceName = voices[voiceIndex].name;
-        configState.config.doVoiceLang = voices[voiceIndex].lang;
+        if (voiceIndex >= 0 && voiceIndex < voices.length) {
+            configState.config.doVoiceName = voices[voiceIndex].name;
+            configState.config.doVoiceLang = voices[voiceIndex].lang;
+        }
     } else {
         configState.config.doVoiceName = null;
         configState.config.doVoiceLang = null;
     }
 
-    // Get a fresh session key when saving config
+    // Ensure session key update doesn't block config save
     try {
         const { sessionKey, expiresAt } = await CloudflareWorkerAPI.getSessionKey(
-            'user', // Default username
+            'user',
             configState.config.broadcasterName
         );
         configState.config.sessionKey = sessionKey;
@@ -150,11 +153,12 @@ async function saveConfig() {
     } catch (error) {
         console.error('Error getting session key during save:', error);
         window.addActivityItem('Error refreshing session key, but configuration saved', 'event');
+    } finally {
+        // Always save config even if session key fails
+        localStorage.setItem('chatCoachConfig', JSON.stringify(configState.config));
+        window.addActivityItem('Configuration saved', 'event');
+        configSection.classList.add('hidden');
     }
-
-    localStorage.setItem('chatCoachConfig', JSON.stringify(configState.config));
-    window.addActivityItem('Configuration saved', 'event');
-    configSection.classList.add('hidden');
 
     // Return the updated config
     return configState.config;
