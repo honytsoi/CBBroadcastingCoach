@@ -142,9 +142,9 @@ function displayError(error) {
 
 // We no longer need the determineSayOrDoPrompt function since the backend provides this information
 
-async function generateCoachingPrompt(config, context, onPromptGenerated) {
+async function generateCoachingPrompt(config, context, onPromptGenerated, reason) {
     // debugging
-    console.log('generateCoachingPrompt', config, context);
+    console.log('generateCoachingPrompt', config, context, reason);
     if (context.length === 0 || aiState.isGeneratingPrompt) return;
 
     aiState.isGeneratingPrompt = true;
@@ -191,7 +191,8 @@ async function generateCoachingPrompt(config, context, onPromptGenerated) {
                 broadcaster: config.broadcasterName,
                 preferences: config.preferences,
                 aimodel: config.aiModel,  // Pass AI model to backend
-                sessionKey: sessionKey
+                sessionKey: sessionKey,
+    reason: reason
             })
         });
 

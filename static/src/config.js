@@ -9,13 +9,14 @@ const configState = {
         aiModel: null, // Will be populated after loading models from backend
 
         broadcasterName: '',
-        promptLanguage: 'en-US',
+        promptLanguage: 'en-US', // Default to English US
         promptDelay: 5,
         preferences: '',
         sessionKey: null,
         scannedUrl: '', // New field to store scanned QR code URL
         sayVoice: null, // Voice for "say" prompts (things to repeat)
-        doVoice: null   // Voice for "do" prompts (instructions)
+        doVoice: null,   // Voice for "do" prompts (instructions)
+  audioEnabled: true
     },
 
     // Method to update config
@@ -96,6 +97,7 @@ function loadConfig() {
             document.getElementById('promptLanguage').value = configState.config.promptLanguage || 'en-US';
             document.getElementById('promptDelay').value = configState.config.promptDelay || 5;
             document.getElementById('preferences').value = configState.config.preferences || '';
+   document.getElementById('audioEnabled').checked = configState.config.audioEnabled !== false;
         } catch (error) {
             console.error('Error loading saved configuration:', error);
         }
@@ -113,6 +115,7 @@ async function saveConfig() {
     configState.config.promptLanguage = document.getElementById('promptLanguage').value;
     configState.config.promptDelay = parseInt(document.getElementById('promptDelay').value) || 5;
     configState.config.preferences = document.getElementById('preferences').value;
+ configState.config.audioEnabled = document.getElementById('audioEnabled').checked;
 
     // Save voice selections with null checks
     const sayVoiceSelect = document.getElementById('sayVoiceSelect');

@@ -1,5 +1,5 @@
 // src/app.js
-import { initConfig, configState, clearLocalStorage } from './config.js';
+import { initConfig, configState, clearLocalStorage, saveConfig } from './config.js';
 import { initQRScanner } from './qr-scanner.js';
 import * as CloudflareWorkerAPI from './api/cloudflareWorker.js';
 import UserManager from './user-manager.js';
@@ -12,6 +12,7 @@ const appState = {
     context: [],
     lastPromptTimestamp: null,
     broadcasterInfo: null,
+    inactivityTimer: null, // Timer for inactivity based prompts
     userManager: new UserManager()
 };
 
@@ -34,14 +35,18 @@ document.addEventListener('DOMContentLoaded', () => {
     audioEnabled = document.getElementById('audioEnabled');
     connectionStatus = document.getElementById('connectionStatus');
     lastPromptTime = document.getElementById('lastPromptTime');
-    
     // Initialize modules
     initConfig();
     initQRScanner(connectToEventAPI);
-    
+
     // Add event listeners
     disconnectBtn.addEventListener('click', disconnectFromEventAPI);
-    
+
+    // Add event listener for audio enable toggle
+    audioEnabled.addEventListener('change', () => {
+        saveConfig();
+    });
+
 // Make addActivityItem available globally for other modules
 window.addActivityItem = addActivityItem;
 
@@ -142,10 +147,15 @@ function connectToEventAPI(url) {
     // Fetch broadcaster profile info if username is available
     if (configState.config.broadcasterName) {
         fetchBroadcasterProfile();
-    }
+    };
 
-    // Start polling for events
-    getEvents(url);
+// Start polling for events
+getEvents(url);
+}
+
+// Start inactivity timer
+function startInactivityTimer() {
+  appState.inactivityTimer = setTimeout(triggerInactivityPrompt, configState.config.promptDelay * 1000 * 60); // delay in minutes
 }
 
 // Recursive function to poll for events
@@ -195,6 +205,10 @@ function disconnectFromEventAPI() {
     appState.apiEndpoint = null;
     connectionStatus.textContent = 'Disconnected';
     document.getElementById('scanResult').classList.add('hidden');
+ 
+    // Clear inactivity timer
+    clearTimeout(appState.inactivityTimer);
+    appState.inactivityTimer = null;
     addActivityItem('Disconnected from event stream', 'event');
 }
 
@@ -324,17 +338,38 @@ function processEvent(message) {
     } else {
         addActivityItem(`Event: ${method}`, 'event');
     }
-    
-    // Generate AI coaching prompt if enough time has passed
-    const now = new Date();
-    const timeSinceLastPrompt = appState.lastPromptTimestamp 
-        ? (now - appState.lastPromptTimestamp) / 1000 
-        : configState.config.promptDelay + 1;
-            
-    if (timeSinceLastPrompt > configState.config.promptDelay) {
-        // Changed reference to CloudflareWorkerAPI.generateCoachingPrompt
-        CloudflareWorkerAPI.default.generateCoachingPrompt(configState.config, appState.context, addPromptItem);
+
+    // Reset inactivity timer on any event
+    resetInactivityTimer();
+
+    // Event-based prompt triggering
+    let triggerPrompt = false;
+    if (method === "tip") {
+        triggerPrompt = true;
+    } else if (method === "chatMessage") {
+        triggerPrompt = true;
+    } else if (method === "userEnter") {
+        triggerPrompt = true;
     }
+
+    if (triggerPrompt) {
+        console.log(`AI prompt triggered due to event: ${method}`);
+        CloudflareWorkerAPI.default.generateCoachingPrompt(configState.config, appState.context, addPromptItem, method);
+    }
+}
+
+// Reset inactivity timer
+function resetInactivityTimer() {
+    clearTimeout(appState.inactivityTimer);
+    appState.inactivityTimer = setTimeout(triggerInactivityPrompt, configState.config.promptDelay * 1000 * 60); // delay in minutes
+}
+
+// Trigger AI prompt due to inactivity
+function triggerInactivityPrompt() {
+    if (appState.connected) {
+        console.log("AI prompt triggered due to inactivity");
+        CloudflareWorkerAPI.default.generateCoachingPrompt(configState.config, appState.context, addPromptItem, "inactivity");
+     }
 }
 
 // Setup the users section in the UI
