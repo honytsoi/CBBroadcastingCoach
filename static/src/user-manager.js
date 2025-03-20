@@ -1,7 +1,7 @@
 // User management system for Broadcasting Real-Time Coach
 // Tracks users and their interactions in the broadcast
 import { validateImportData, createBackup, isFileSizeValid, mergeUsers } from './data-manager.js';
-
+import { displayError } from './displayError.js';
 export class UserManager {
     constructor() {
         this.users = new Map();
@@ -13,7 +13,7 @@ export class UserManager {
     // Add a new user if they don't already exist
     addUser(username) {
         if (!username || typeof username !== 'string' || username === 'Anonymous') return;
-        
+
         if (!this.users.has(username)) {
             const newUser = this.getDefaultUser(username);
             this.users.set(username, newUser);
@@ -26,13 +26,13 @@ export class UserManager {
     // Update an existing user's information
     updateUser(username, updates) {
         if (!username || username === 'Anonymous') return false;
-        
+
         let user = this.users.get(username);
         if (!user) {
             user = this.getDefaultUser(username);
             this.users.set(username, user);
         }
-        
+
         // Special handling for chat messages
         if (updates.recentMessage) {
             user.mostRecentlySaidThings.unshift(updates.recentMessage);
@@ -41,7 +41,7 @@ export class UserManager {
             }
             delete updates.recentMessage;
         }
-        
+
         // Handle tip updates
         if (updates.tipAmount) {
             user.amountTippedTotal += updates.tipAmount;
@@ -49,13 +49,13 @@ export class UserManager {
             user.mostRecentTipDatetime = new Date().toISOString();
             delete updates.tipAmount;
         }
-        
+
         // Apply remaining updates
         Object.assign(user, updates);
-        
+
         // Always update last seen date on any update
         user.lastSeenDate = new Date().toISOString();
-        
+
         this.debouncedSave();
         return true;
     }
@@ -71,7 +71,7 @@ export class UserManager {
             // Online users first
             if (a.isOnline && !b.isOnline) return -1;
             if (!a.isOnline && b.isOnline) return 1;
-            
+
             // Then sort by last seen date (most recent first)
             return new Date(b.lastSeenDate) - new Date(a.lastSeenDate);
         });
@@ -131,7 +131,7 @@ export class UserManager {
             // Implement cleanup strategy - remove half of the least recently seen users
             const sortedUsers = Array.from(this.users.entries())
                 .sort((a, b) => new Date(a[1].lastSeenDate) - new Date(b[1].lastSeenDate));
-            
+
             const usersToKeep = sortedUsers.slice(Math.floor(sortedUsers.length / 2));
             this.users = new Map(usersToKeep);
             this.saveUsers();
@@ -159,7 +159,7 @@ export class UserManager {
             this.users = new Map();
         }
     }
-    
+
     /**
      * Export all data as JSON
      * @param {Object} configData - Configuration data to include
@@ -189,61 +189,69 @@ export class UserManager {
      * @returns {Object} - Result {success: boolean, message: string}
      */
     importData(jsonData, configState, merge = false, password) {
+        let decryptedJson = jsonData;
         try {
-            let decryptedJson = jsonData;
             if (password) {
                 // Decrypt the data
                 decryptedJson = this.ProtectionDeEncode(jsonData, password);
             }
-
-            // Check file size (approximate check based on string length)
-            if (!isFileSizeValid(decryptedJson.length)) {
-                return { success: false, message: 'File size exceeds 10MB limit' };
-            }
-
-            // Parse data
-            const data = JSON.parse(decryptedJson);
-
-            // Validate data structure
-            const validation = validateImportData(data);
-            if (!validation.valid) {
-                return { success: false, message: validation.error };
-            }
-            
-            // Create backup before import
-            const backupData = this.getAllUsers();
-            const backupConfig = { ...configState.config };
-            const backup = createBackup(backupData, backupConfig);
-            localStorage.setItem('broadcastCoachBackup', backup);
-            
-            if (merge) {
-                // Merge users instead of replacing
-                const currentUsers = this.getAllUsers();
-                const mergedUsers = mergeUsers(currentUsers, data.users);
-                
-                // Clear existing data
-                this.clearAllUsers();
-                
-                // Import merged users
-                mergedUsers.forEach(user => this.addUserObject(user));
-            } else {
-                // Clear existing data
-                this.clearAllUsers();
-                
-                // Import users
-                data.users.forEach(user => this.addUserObject(user));
-            }
-            
-            // Update settings
-            configState.updateConfig(data.settings);
-            
-            return { success: true, message: 'Data imported successfully' };
         } catch (error) {
-            console.error('Import failed:', error);
-            return { success: false, message: `Import failed: ${error.message}` };
+            if (error.message === "Decryption failed. Incorrect password?") {
+                displayError(new Error("Decryption failed. Incorrect password provided."));
+                return { success: false, message: "Decryption failed. Incorrect password provided." };
+            } else {
+                console.error('Import failed:', error);
+                return { success: false, message: `Import failed: ${error.message}` };
+            }
         }
+
+        // Check file size (approximate check based on string length)
+        if (!isFileSizeValid(decryptedJson.length)) {
+            return { success: false, message: 'File size exceeds 10MB limit' };
+        }
+
+        // Parse data
+        const data = JSON.parse(decryptedJson);
+
+        // Validate data structure
+        const validation = validateImportData(data);
+        if (!validation.valid) {
+            return { success: false, message: validation.error };
+        }
+
+        // Create backup before import
+        const backupData = this.getAllUsers();
+        const backupConfig = { ...configState.config };
+        const backup = createBackup(backupData, backupConfig);
+        localStorage.setItem('broadcastCoachBackup', backup);
+
+        if (merge) {
+            // Merge users instead of replacing
+            const currentUsers = this.getAllUsers();
+            const mergedUsers = mergeUsers(currentUsers, data.users);
+
+            // Clear existing data
+            this.clearAllUsers();
+
+            // Import merged users
+            mergedUsers.forEach(user => this.addUserObject(user));
+        } else {
+            // Clear existing data
+            this.clearAllUsers();
+
+            // Import users
+            data.users.forEach(user => this.addUserObject(user));
+        }
+
+        // Update settings
+        configState.updateConfig(data.settings);
+
+        return { success: true, message: 'Data imported successfully' };
+    } catch (error) {
+        console.error('Import failed:', error);
+        return { success: false, message: `Import failed: ${error.message}` };
     }
-    
+
     /**
      * Add a user object directly (for import)
      * @param {Object} userObject - Complete user object
@@ -251,18 +259,18 @@ export class UserManager {
      */
     addUserObject(userObject) {
         if (!userObject || !userObject.username) return false;
-        
+
         this.users.set(userObject.username, {
             ...this.getDefaultUser(userObject.username),
             ...userObject,
             // Reset online status on import
             isOnline: false
         });
-        
+
         this.debouncedSave();
         return true;
     }
-    
+
     /**
      * Clear all user data
      * @returns {boolean} - Success status
@@ -272,7 +280,7 @@ export class UserManager {
         this.debouncedSave();
         return true;
     }
-    
+
     /**
      * Restore from backup
      * @param {Object} configState - Configuration state object to update
@@ -284,7 +292,7 @@ export class UserManager {
             if (!backup) {
                 return { success: false, message: 'No backup found' };
             }
-            
+
             return this.importData(backup, configState);
         } catch (error) {
             console.error('Restore failed:', error);
@@ -312,22 +320,21 @@ export class UserManager {
     }
 
     ProtectionEncode(data, password) {
-        this.xorEncode(data, password)
+        const ciphertext = CryptoJS.AES.encrypt(data, password).toString();
+        return ciphertext;
     }
-
 
     ProtectionDeEncode(data, password) {
-        this.xorEncode(data, password)
+        try {
+            const bytes = CryptoJS.AES.decrypt(data, password);
+            const plaintext = bytes.toString(CryptoJS.enc.Utf8);
+            return plaintext;
+        } catch (e) {
+            console.error("Decryption error:", e);
+            throw new Error("Decryption failed. Incorrect password?");
+        }
     }
 
-    // XOR encode/decode function
-    xorEncode(data, password) {
-        let encoded = "";
-        for (let i = 0; i < data.length; i++) {
-            encoded += String.fromCharCode(data.charCodeAt(i) ^ password.charCodeAt(i % password.length));
-        }
-        return encoded;
-    }
-}
+};
 
 export default UserManager;
