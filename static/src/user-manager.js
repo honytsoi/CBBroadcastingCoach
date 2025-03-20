@@ -163,35 +163,47 @@ export class UserManager {
     /**
      * Export all data as JSON
      * @param {Object} configData - Configuration data to include
+     * @param {string} password - Password to encrypt the data with (can be null)
      * @returns {string} - JSON string of exported data
      */
-    exportData(configData) {
+    exportData(configData, password) {
         const data = {
             version: "1.0",
             timestamp: new Date().toISOString(),
             users: this.getAllUsers(),
             settings: configData
         };
-        return JSON.stringify(data, null, 2);
+        let jsonData = JSON.stringify(data, null, 2);
+        if (password) {
+            jsonData = this.ProtectionEncode(jsonData, password);
+        }
+        return jsonData;
     }
-    
+
     /**
      * Import data from JSON
      * @param {string} jsonData - JSON string to import
      * @param {Object} configState - Configuration state object to update
      * @param {boolean} merge - Whether to merge with existing data
+     * @param {string} password - Password to decrypt the data with (can be null)
      * @returns {Object} - Result {success: boolean, message: string}
      */
-    importData(jsonData, configState, merge = false) {
+    importData(jsonData, configState, merge = false, password) {
         try {
+            let decryptedJson = jsonData;
+            if (password) {
+                // Decrypt the data
+                decryptedJson = this.ProtectionDeEncode(jsonData, password);
+            }
+
             // Check file size (approximate check based on string length)
-            if (!isFileSizeValid(jsonData.length)) {
+            if (!isFileSizeValid(decryptedJson.length)) {
                 return { success: false, message: 'File size exceeds 10MB limit' };
             }
-            
+
             // Parse data
-            const data = JSON.parse(jsonData);
-            
+            const data = JSON.parse(decryptedJson);
+
             // Validate data structure
             const validation = validateImportData(data);
             if (!validation.valid) {
@@ -297,6 +309,24 @@ export class UserManager {
             numberOfPrivateShowsTaken: 0,
             isOnline: false
         };
+    }
+
+    ProtectionEncode(data, password) {
+        this.xorEncode(data, password)
+    }
+
+
+    ProtectionDeEncode(data, password) {
+        this.xorEncode(data, password)
+    }
+
+    // XOR encode/decode function
+    xorEncode(data, password) {
+        let encoded = "";
+        for (let i = 0; i < data.length; i++) {
+            encoded += String.fromCharCode(data.charCodeAt(i) ^ password.charCodeAt(i % password.length));
+        }
+        return encoded;
     }
 }
 

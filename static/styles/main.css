@@ -709,3 +709,41 @@ input:checked + .slider:before {
 .slider.round:before {
     border-radius: 50%;
 }
+
+/* Data Password Input */
+#dataPassword {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+#dataPassword:focus {
+    border-color: #4a90e2; /* Highlight on focus */
+    outline: none;
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.5); /* Soft glow effect */
+}
+
+/* Enable Password Protection Label */
+.settings-row > label {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #444;
+}
+
+/* Data Password Input */
+#dataPassword {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+#dataPassword:focus {
+    border-color: #4a90e2; /* Highlight on focus */
+    outline: none;
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.5); /* Soft glow effect */
+}

@@ -347,31 +347,44 @@ function testVoice(voiceType) {
  * Add data management UI elements
  */
 function addDataManagementUI() {
-    // Create data management section
-    const settingsSection = document.getElementById('configSection');
-    const dataSection = document.createElement('div');
-    dataSection.className = 'settings-group';
-    dataSection.innerHTML = `
-        <h3>Data Management</h3>
-        <div class="settings-row">
-            <label>Import/Export Data:</label>
-            <div class="button-group">
-                <button id="exportData" class="action-button">Export Data</button>
-                <button id="importData" class="action-button">Import Data</button>
-            </div>
-        </div>
-<div class="settings-row hidden" id="importOptions">
-    <label>Import Options:</label>
-    <div class="checkbox-group">
-        <label class="switch">
-            <input type="checkbox" id="mergeData" name="mergeData">
-            <span class="slider round"></span>
-        </label>
-        <span>Merge with existing data</span>
-    </div>
-</div>
-        <div id="dataManagementResult" class="result-box hidden"></div>
-    `;
+   // Create data management section
+   const settingsSection = document.getElementById('configSection');
+   const dataSection = document.createElement('div');
+   dataSection.className = 'settings-group';
+   dataSection.innerHTML = `
+       <h3>Data Management</h3>
+       <div class="settings-row">
+           <label>Import/Export Data:</label>
+           <div class="button-group">
+               <button id="exportData" class="action-button">Export Data</button>
+               <button id="importData" class="action-button">Import Data</button>
+           </div>
+       </div>
+       <div class="settings-row">
+           <label>Enable Password Protection:</label>
+           <div class="checkbox-group">
+               <label class="switch">
+                   <input type="checkbox" id="enablePassword" name="enablePassword">
+                   <span class="slider round"></span>
+               </label>
+           </div>
+       </div>
+       <div class="settings-row hidden" id="passwordRow">
+           <label for="dataPassword">Data Password:</label>
+           <input type="password" id="dataPassword" placeholder="Enter password">
+       </div>
+       <div class="settings-row hidden" id="importOptions">
+           <label>Import Options:</label>
+           <div class="checkbox-group">
+               <label class="switch">
+                   <input type="checkbox" id="mergeData" name="mergeData">
+                   <span class="slider round"></span>
+               </label>
+               <span>Merge with existing data</span>
+           </div>
+       </div>
+       <div id="dataManagementResult" class="result-box hidden"></div>
+   `;
 
     // Add the data section to the settings section
     settingsSection.appendChild(dataSection);
@@ -384,9 +397,31 @@ function addDataManagementUI() {
     const mergeCheckbox = document.getElementById('mergeData');
 
     // Add event listeners
+    const enablePasswordCheckbox = document.getElementById('enablePassword');
+    const passwordRow = document.getElementById('passwordRow');
+
+    enablePasswordCheckbox.addEventListener('change', () => {
+        const isChecked = enablePasswordCheckbox.checked;
+        passwordRow.classList.toggle('hidden', !isChecked);
+        passwordRow.setAttribute('aria-hidden', !isChecked);
+        const passwordInput = document.getElementById('dataPassword');
+        passwordInput.disabled = !isChecked;
+
+    });
+
     exportButton.addEventListener('click', () => {
         try {
-            const blob = new Blob([userManager.exportData(configState.config)], { type: 'application/json' });
+            const enablePassword = document.getElementById('enablePassword').checked;
+            const password = document.getElementById('dataPassword').value;
+            const data = enablePassword
+                ? userManager.exportData(configState.config, password)
+                : JSON.stringify({
+                    version: "1.0",
+                    timestamp: new Date().toISOString(),
+                    users: userManager.getAllUsers(),
+                    settings: configState.config
+                }, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -423,6 +458,9 @@ function addDataManagementUI() {
             const file = e.target.files[0];
             if (!file) return;
 
+            const enablePassword = document.getElementById('enablePassword').checked;
+            const password = document.getElementById('dataPassword').value;
+
             // Check file size
             if (file.size > 10 * 1024 * 1024) {
                 dataResult.textContent = 'File size exceeds 10MB limit';
@@ -442,7 +480,10 @@ function addDataManagementUI() {
                     if (confirm('This will replace your current data. Are you sure you want to proceed?')) {
                         // Import data
                         const mergeMode = mergeCheckbox.checked;
-                        const result = userManager.importData(fileContent, configState, mergeMode);
+                        const enablePassword = document.getElementById('enablePassword').checked;
+                        const result = enablePassword
+                            ? userManager.importData(fileContent, configState, mergeMode, password)
+                            : userManager.importData(fileContent, configState, mergeMode, null);
 
                         if (result.success) {
                             // Show success message
