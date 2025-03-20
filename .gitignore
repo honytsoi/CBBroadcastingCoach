@@ -170,3 +170,6 @@ dist
 
 .dev.vars
 .wrangler/
+
+# tests
+tests/headless/screenshots/
