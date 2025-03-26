@@ -492,9 +492,88 @@ function updateUsersUI() {
                     <span>${user.numberOfPrivateShowsTaken}</span>
                 </div>
             ` : ''}
+            <div class="detail-row">
+                <label>Token Stats:</label>
+                <div class="token-stats">
+                    <span>Total: ${user.tokenStats.totalSpent || 0}</span>
+                    <span>7d: ${user.tokenStats.timePeriods.day7.tips || 0}</span>
+                    <span>30d: ${user.tokenStats.timePeriods.day30.tips || 0}</span>
+                </div>
+            </div>
         `;
         
-        // Add recent messages if available
+        // Add event timeline if available
+        if (user.eventHistory && user.eventHistory.length > 0) {
+            const timelineContainer = document.createElement('div');
+            timelineContainer.className = 'detail-row';
+            
+            const label = document.createElement('label');
+            label.textContent = 'Recent Activity:';
+            
+            const timeline = document.createElement('div');
+            timeline.className = 'event-timeline';
+            
+            // Show most recent 5 events
+            user.eventHistory.slice(0, 5).forEach(event => {
+                const eventItem = document.createElement('div');
+                eventItem.className = `event-item ${event.type}`;
+                
+                const eventTime = document.createElement('span');
+                eventTime.className = 'event-time';
+                eventTime.textContent = new Date(event.timestamp).toLocaleTimeString();
+                
+                const eventContent = document.createElement('span');
+                eventContent.className = 'event-content';
+                
+                // Format event content based on type
+                switch(event.type) {
+                    case 'tip':
+                        eventContent.textContent = `Tipped ${event.data.amount} tokens`;
+                        if (event.data.note) {
+                            eventContent.textContent += `: ${event.data.note}`;
+                        }
+                        break;
+                    case 'chatMessage':
+                        eventContent.textContent = `Said: ${event.data.content}`;
+                        break;
+                    case 'privateMessage':
+                        eventContent.textContent = `Private: ${event.data.content}`;
+                        break;
+                    case 'privateShow':
+                        eventContent.textContent = `Private show (${event.data.duration}s, ${event.data.tokens}t)`;
+                        break;
+                    case 'privateShowSpy':
+                        eventContent.textContent = `Spy show (${event.data.duration}s, ${event.data.tokens}t)`;
+                        break;
+                    case 'mediaPurchase':
+                        eventContent.textContent = `Bought ${event.data.item}`;
+                        break;
+                    default:
+                        eventContent.textContent = `${event.type}`;
+                }
+                
+                eventItem.appendChild(eventTime);
+                eventItem.appendChild(eventContent);
+                timeline.appendChild(eventItem);
+            });
+            
+            // Add "View All" button if there are more events
+            if (user.eventHistory.length > 5) {
+                const viewAllBtn = document.createElement('button');
+                viewAllBtn.className = 'view-all-events';
+                viewAllBtn.textContent = `View all ${user.eventHistory.length} events`;
+                viewAllBtn.addEventListener('click', () => {
+                    showFullEventTimeline(user);
+                });
+                timeline.appendChild(viewAllBtn);
+            }
+            
+            timelineContainer.appendChild(label);
+            timelineContainer.appendChild(timeline);
+            details.appendChild(timelineContainer);
+        }
+        
+        // Add recent messages if available (legacy)
         if (user.mostRecentlySaidThings && user.mostRecentlySaidThings.length > 0) {
             const messagesContainer = document.createElement('div');
             messagesContainer.className = 'detail-row';

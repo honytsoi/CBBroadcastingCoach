@@ -725,6 +725,198 @@ input:checked + .slider:before {
     box-shadow: 0 0 5px rgba(74, 144, 226, 0.5); /* Soft glow effect */
 }
 
+/* Event Timeline Styles */
+.event-timeline {
+    margin: 8px 0;
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 8px;
+    background-color: #fafafa;
+}
+
+.event-item {
+    display: flex;
+    gap: 8px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    align-items: center;
+    background-color: white;
+    border-left: 3px solid #4a90e2;
+}
+
+.event-item.tip {
+    border-left-color: #28a745;
+    background-color: #f0fff4;
+}
+
+.event-item.chatMessage {
+    border-left-color: #6c757d;
+    background-color: #f8f9fa;
+}
+
+.event-item.privateMessage {
+    border-left-color: #6f42c1;
+    background-color: #f5f0ff;
+}
+
+.event-item.privateShow,
+.event-item.privateShowSpy {
+    border-left-color: #fd7e14;
+    background-color: #fff4e6;
+}
+
+.event-item.mediaPurchase {
+    border-left-color: #20c997;
+    background-color: #e6fcf5;
+}
+
+.event-time {
+    color: #6c757d;
+    font-size: 0.8rem;
+    min-width: 60px;
+}
+
+.event-content {
+    flex-grow: 1;
+}
+
+/* Token Stats */
+.token-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9rem;
+}
+
+.token-stats span {
+    padding: 4px 8px;
+    background-color: #f0f7ff;
+    border-radius: 4px;
+    color: #4a90e2;
+}
+
+/* View All Events Button */
+.view-all-events {
+    width: 100%;
+    padding: 8px;
+    background-color: #f0f7ff;
+    border: 1px solid #cce5ff;
+    color: #4a90e2;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.view-all-events:hover {
+    background-color: #e0f0ff;
+}
+
+/* Event Timeline Modal */
+.event-timeline-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    overflow-y: auto;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6c757d;
+    transition: color 0.3s;
+}
+
+.close-modal:hover {
+    color: #495057;
+}
+
+/* Full Event Timeline */
+.full-event-timeline {
+    margin-top: 16px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.full-event-timeline .event-item {
+    padding: 10px 12px;
+    margin-bottom: 6px;
+}
+
+/* Event Stats */
+.event-stats {
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: #4a90e2;
+    font-size: 1.1rem;
+}
+
+/* Event Filters */
+.event-filters {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.event-filters select,
+.event-filters input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.event-filters input {
+    flex-grow: 1;
+}
+
 /* Enable Password Protection Label */
 .settings-row > label {
     display: inline-block;

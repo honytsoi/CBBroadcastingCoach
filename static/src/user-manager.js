@@ -93,12 +93,18 @@ export class UserManager {
     }
 
     // Add a message to a user's recent messages
-    addUserMessage(username, message) {
+    addUserMessage(username, message, isPrivate = false) {
+        const type = isPrivate ? 'privateMessage' : 'chatMessage';
+        this.addEvent(username, type, { 
+            content: message,
+            isPrivate 
+        });
         return this.updateUser(username, { recentMessage: message });
     }
 
     // Record a tip from a user
-    recordUserTip(username, amount) {
+    recordUserTip(username, amount, note = null) {
+        this.addEvent(username, 'tip', { amount, note });
         return this.updateUser(username, { tipAmount: amount });
     }
 
@@ -315,8 +321,279 @@ export class UserManager {
             preferences: '',
             interests: '',
             numberOfPrivateShowsTaken: 0,
-            isOnline: false
+            isOnline: false,
+            // New event history structure
+            eventHistory: [],
+            tokenStats: {
+                username,
+                totalSpent: 0,
+                lastUpdated: new Date().toISOString(),
+                timePeriods: {
+                    day7: {
+                        tips: 0,
+                        privates: 0,
+                        media: 0
+                    },
+                    day30: {
+                        tips: 0,
+                        privates: 0,
+                        media: 0
+                    }
+                }
+            },
+            maxHistory: 1000
         };
+    }
+
+    /**
+     * Base event handler
+     * @param {string} username - User who triggered the event
+     * @param {string} type - Event type (see supported types)
+     * @param {Object} data - Event-specific data
+     * @returns {boolean} - Success status
+     */
+    addEvent(username, type, data = {}) {
+        if (!username || !type) return false;
+
+        const user = this.getUser(username) || this.getDefaultUser(username);
+        this.users.set(username, user);
+
+        // Create new event
+        const event = {
+            username,
+            type,
+            timestamp: new Date().toISOString(),
+            data: {
+                note: data.note || null,
+                amount: data.amount || null,
+                content: data.content || null,
+                isPrivate: data.isPrivate || null,
+                fanClubMember: data.fanClubMember || null,
+                item: data.item || null,
+                subject: data.subject || null
+            }
+        };
+
+        // Add to history
+        user.eventHistory.unshift(event);
+        
+        // Enforce max history limit
+        if (user.eventHistory.length > user.maxHistory) {
+            user.eventHistory.pop();
+        }
+
+        // Update aggregates if this is a token-related event
+        if (data.amount) {
+            this.updateTokenStats(user, event);
+        }
+
+        this.debouncedSave();
+        return true;
+    }
+
+    /**
+     * Update token stats when a token-related event occurs
+     * @param {Object} user - User object
+     * @param {Object} event - The event being added
+     */
+    updateTokenStats(user, event) {
+        const amount = event.data.amount || 0;
+        
+        // Update total spent
+        user.tokenStats.totalSpent += amount;
+        user.tokenStats.lastUpdated = new Date().toISOString();
+
+        // Update time periods if within range
+        const eventDate = new Date(event.timestamp);
+        const daysAgo = (Date.now() - eventDate) / (1000 * 60 * 60 * 24);
+        
+        if (daysAgo <= 7) {
+            this.updateTimePeriod(user.tokenStats.timePeriods.day7, event.type, amount);
+        }
+        if (daysAgo <= 30) {
+            this.updateTimePeriod(user.tokenStats.timePeriods.day30, event.type, amount);
+        }
+    }
+
+    /**
+     * Update a specific time period stats
+     * @param {Object} period - The time period object (day7 or day30)
+     * @param {string} type - Event type
+     * @param {number} amount - Token amount
+     */
+    updateTimePeriod(period, type, amount) {
+        // Group similar event types
+        const category = type === 'privateMessage' || type === 'privateShow' ? 'privates' :
+                        type === 'mediaPurchase' ? 'media' : 'tips';
+        
+        period[category] = (period[category] || 0) + amount;
+    }
+
+    /**
+     * Recalculate all token stats from event history
+     * @param {Object} user - User object to recalculate
+     */
+    recalculateTotals(user) {
+        // Reset all totals
+        user.tokenStats = {
+            username: user.username,
+            totalSpent: 0,
+            lastUpdated: new Date().toISOString(),
+            timePeriods: {
+                day7: { tips: 0, privates: 0, media: 0 },
+                day30: { tips: 0, privates: 0, media: 0 }
+            }
+        };
+
+        // Process all relevant events
+        user.eventHistory.forEach(event => {
+            if (event.data.amount) {
+                this.updateTokenStats(user, event);
+            }
+        });
+    }
+
+    /**
+     * Import token history from CSV
+     * @param {string} csvData - CSV string to import
+     * @returns {Object} - Result {success: boolean, message: string, stats: {users: number, tokens: number}}
+     */
+    importTokenHistory(csvData) {
+        try {
+            // Parse CSV using PapaParse if available, or simple split as fallback
+            const rows = typeof Papa !== 'undefined' ? 
+                Papa.parse(csvData, { header: true }).data :
+                this.simpleCSVParse(csvData);
+
+            if (!rows || rows.length === 0) {
+                return { success: false, message: 'No valid data found in CSV' };
+            }
+
+            const requiredFields = ['User', 'Token change', 'Timestamp'];
+            if (!requiredFields.every(field => Object.keys(rows[0]).includes(field))) {
+                return { success: false, message: 'CSV missing required fields' };
+            }
+
+            // Process rows and track private show sequences
+            const privateShowSequences = {};
+            let importedTokens = 0;
+            let importedUsers = new Set();
+
+            rows.forEach(row => {
+                if (!row.User || !row['Token change'] || !row.Timestamp) return;
+
+                const username = row.User.trim();
+                const amount = parseFloat(row['Token change']);
+                const note = row.Note ? row.Note.trim() : null;
+                const timestamp = new Date(row.Timestamp).toISOString();
+
+                if (isNaN(amount) || amount <= 0) return;
+
+                // Check for private show entries (occurring every ~10 seconds)
+                if (note && (note.includes('Private') || note.includes('Spy'))) {
+                    if (!privateShowSequences[username]) {
+                        privateShowSequences[username] = [];
+                    }
+                    privateShowSequences[username].push({
+                        amount,
+                        timestamp,
+                        isSpy: note.includes('Spy')
+                    });
+                } else {
+                    // Regular tip
+                    this.addEvent(username, 'tip', {
+                        amount,
+                        note,
+                        timestamp
+                    });
+                    importedUsers.add(username);
+                    importedTokens += amount;
+                }
+            });
+
+            // Process private show sequences into meta events
+            Object.entries(privateShowSequences).forEach(([username, entries]) => {
+                if (entries.length === 0) return;
+
+                // Sort by timestamp (oldest first)
+                entries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                // Group into shows (gap >30s starts new show)
+                let currentShow = [];
+                const shows = [];
+
+                entries.forEach((entry, i) => {
+                    if (i > 0) {
+                        const prevTime = new Date(entries[i-1].timestamp);
+                        const currTime = new Date(entry.timestamp);
+                        const gap = (currTime - prevTime) / 1000;
+                        
+                        if (gap > 30) {
+                            shows.push(currentShow);
+                            currentShow = [];
+                        }
+                    }
+                    currentShow.push(entry);
+                });
+                if (currentShow.length > 0) shows.push(currentShow);
+
+                // Create meta events
+                shows.forEach(showEntries => {
+                    if (showEntries.length === 0) return;
+
+                    const firstEntry = showEntries[0];
+                    const lastEntry = showEntries[showEntries.length - 1];
+                    const isSpy = firstEntry.isSpy;
+                    const totalTokens = showEntries.reduce((sum, e) => sum + e.amount, 0);
+                    const duration = (new Date(lastEntry.timestamp) - new Date(firstEntry.timestamp)) / 1000;
+
+                    this.addEvent(username, isSpy ? 'privateShowSpy' : 'privateShow', {
+                        duration,
+                        tokens: totalTokens,
+                        startTime: firstEntry.timestamp,
+                        endTime: lastEntry.timestamp
+                    });
+
+                    importedUsers.add(username);
+                    importedTokens += totalTokens;
+                });
+            });
+
+            return { 
+                success: true, 
+                message: `Imported ${importedTokens} tokens from ${importedUsers.size} users`,
+                stats: {
+                    users: importedUsers.size,
+                    tokens: importedTokens
+                }
+            };
+
+        } catch (error) {
+            console.error('CSV import failed:', error);
+            return { 
+                success: false, 
+                message: `CSV import failed: ${error.message}` 
+            };
+        }
+    }
+
+    /**
+     * Simple CSV parser fallback when PapaParse not available
+     * @param {string} csvData 
+     * @returns {Array} Parsed rows
+     */
+    simpleCSVParse(csvData) {
+        const lines = csvData.split('\n');
+        if (lines.length < 2) return [];
+
+        const headers = lines[0].split(',').map(h => h.trim());
+        return lines.slice(1).map(line => {
+            const values = line.split(',');
+            return headers.reduce((obj, header, i) => {
+                obj[header] = values[i] ? values[i].trim() : '';
+                return obj;
+            }, {});
+        });
     }
 
     ProtectionEncode(data, password) {
