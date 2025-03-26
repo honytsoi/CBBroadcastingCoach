@@ -53,8 +53,8 @@ export class UserManager {
         // Apply remaining updates
         Object.assign(user, updates);
 
-        // Always update last seen date on any update
-        user.lastSeenDate = new Date().toISOString();
+        // lastSeenDate is now updated by addEvent based on event timestamps
+        // user.lastSeenDate = new Date().toISOString(); 
 
         this.debouncedSave();
         return true;
@@ -191,6 +191,7 @@ export class UserManager {
     handleStorageError(error) {
         if (error.name === 'QuotaExceededError') {
             // Implement cleanup strategy - remove half of the least recently seen users
+            console.log("Quota exceeded, throwing away half the users")
             const sortedUsers = Array.from(this.users.entries())
                 .sort((a, b) => new Date(a[1].lastSeenDate) - new Date(b[1].lastSeenDate));
 
@@ -366,8 +367,8 @@ export class UserManager {
     getDefaultUser(username) {
         return {
             username,
-            firstSeenDate: new Date().toISOString(),
-            lastSeenDate: new Date().toISOString(),
+            firstSeenDate: null, // Will be set by the first event
+            lastSeenDate: null,  // Will be set by the latest event
             mostRecentlySaidThings: [],
             amountTippedTotal: 0,
             mostRecentTipAmount: 0,
@@ -411,13 +412,29 @@ export class UserManager {
     addEvent(username, type, data = {}) {
         if (!username || !type) return false;
 
-        const user = this.getUser(username) || this.getDefaultUser(username);
-        this.users.set(username, user);
-
-        // Create new event
         // Use provided timestamp if available (for imports), else use current time
         const eventTimestamp = data.timestamp || new Date().toISOString();
 
+        let user = this.getUser(username);
+        let isNewUser = false;
+        if (!user) {
+            user = this.getDefaultUser(username);
+            isNewUser = true;
+        }
+        
+        // Update firstSeenDate for new users or if it's null
+        if (isNewUser || user.firstSeenDate === null) {
+            user.firstSeenDate = eventTimestamp;
+        }
+
+        // Update lastSeenDate if this event is newer or if lastSeenDate is null
+        if (user.lastSeenDate === null || new Date(eventTimestamp) > new Date(user.lastSeenDate)) {
+            user.lastSeenDate = eventTimestamp;
+        }
+
+        this.users.set(username, user);
+
+        // Create new event
         const event = {
             username,
             type,
