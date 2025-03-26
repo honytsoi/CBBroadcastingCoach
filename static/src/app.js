@@ -1,4 +1,4 @@
-t// src/app.js
+// src/app.js
 import { initConfig, configState, clearLocalStorage, saveConfig } from './config.js';
 import { initQRScanner } from './qr-scanner.js';
 import * as CloudflareWorkerAPI from './api/cloudflareWorker.js';
