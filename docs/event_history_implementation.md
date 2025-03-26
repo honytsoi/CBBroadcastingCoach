@@ -258,31 +258,34 @@ Each phase shall be standalone - the app will work without errors (though may no
 
 ## [PARTIAL] Phase 2: Event Type Implementation
 - ✓ Basic event types implemented (tip, chatMessage)
-- ✗ Some advanced event types not fully implemented
-- ✗ PrivateShow/privateShowSpy meta event creation missing
+- ✓ Added convenience methods for: `mediaPurchase`, `userEnter`, `userLeave`, `follow`, `unfollow`, `broadcastStart`, `broadcastStop`, `fanclubJoin`, `roomSubjectChange`.
+- ✓ PrivateShow/privateShowSpy meta event *generation* implemented within CSV import. (Note: No direct convenience methods like `recordPrivateShowStart/Stop` yet).
 - ✓ Console logging of events exists
-- ✗ Need more comprehensive unit tests
+- ✗ Need more comprehensive unit tests for all event types.
 
 ## [PARTIAL] Phase 3: Aggregation System
-- ✓ Basic tokenStats aggregation implemented
-- ✓ recalculateTotals() method exists
-- ✗ Time period breakdowns (7d, 30d) not fully tested
-- ✓ Basic query methods available
-- ✗ Needs more comprehensive unit tests
+- ✓ Basic tokenStats aggregation implemented (`updateTokenStats` called by `addEvent`).
+- ✓ `recalculateTotals()` method exists.
+- ✗ Time period breakdowns (7d, 30d) not fully tested within `updateTokenStats` or `recalculateTotals`.
+- ✓ Basic query methods available (`getTotalSpent`, `getSpentInPeriod`, `calculateCustomPeriodTotal`).
+- ✗ Needs more comprehensive unit tests for aggregation and queries.
 
-## [TODO] Phase 4: CSV Import Functionality
-- ✗ CSV parsing not implemented
-- ✗ Duplicate detection needed
-- ✗ Private show meta event generation
-- ✗ Import error handling
-- ✗ Unit tests needed
+## [DONE] Phase 4: CSV Import Functionality
+- ✓ CSV parsing implemented (using PapaParse via CDN, with fallback).
+- ✓ Duplicate detection implemented (checks timestamp & amount against existing history).
+- ✓ Private show/spy meta event generation implemented (replaces individual entries).
+- ✓ Basic import error handling added (file type check, processing errors, result display).
+- ✓ Unit tests added for import logic (`tests/user-manager.test.js`).
 
 ## [PARTIAL] Phase 5: UI Integration
-- ✓ Import button added to settings panel
-- ✗ Button not wired up to functionality
-- ✗ File selection dialog missing
-- ✗ Progress indicators needed
-- ✗ Event timeline in user profiles incomplete
+- ✓ Import button added to settings panel.
+- ✓ Button wired up to functionality (`handleImportTokenHistory` in `app.js`).
+- ✓ File selection dialog implemented.
+- ✓ Progress indicator added ("Processing...").
+- ✓ Error/Success reporting added (`dataManagementResult`).
+- ✓ Event timeline preview added to user profiles (shows latest 5).
+- ✗ Full event timeline view (e.g., modal) not implemented.
+- ✗ User profile UI doesn't yet use new query methods (`getSpentInPeriod`) for detailed stats.
 
 ## [TODO] Phase 6: Performance Optimization
 - ✗ Lazy loading not implemented

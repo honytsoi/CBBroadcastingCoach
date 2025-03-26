@@ -1,4 +1,4 @@
-// src/app.js
+t// src/app.js
 import { initConfig, configState, clearLocalStorage, saveConfig } from './config.js';
 import { initQRScanner } from './qr-scanner.js';
 import * as CloudflareWorkerAPI from './api/cloudflareWorker.js';
@@ -25,6 +25,8 @@ let connectionStatus;
 let lastPromptTime;
 let usersSection;
 let userList;
+let importTokenHistoryBtn;
+let dataManagementResult;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,12 +37,16 @@ document.addEventListener('DOMContentLoaded', () => {
     audioEnabled = document.getElementById('audioEnabled');
     connectionStatus = document.getElementById('connectionStatus');
     lastPromptTime = document.getElementById('lastPromptTime');
+    importTokenHistoryBtn = document.getElementById('importTokenHistory');
+    dataManagementResult = document.getElementById('dataManagementResult');
+
     // Initialize modules
     initConfig();
     initQRScanner(connectToEventAPI);
 
     // Add event listeners
     disconnectBtn.addEventListener('click', disconnectFromEventAPI);
+    importTokenHistoryBtn.addEventListener('click', handleImportTokenHistory);
 
     // Add event listener for audio enable toggle
     audioEnabled.addEventListener('change', () => {
@@ -571,9 +577,15 @@ function updateUsersUI() {
             timelineContainer.appendChild(label);
             timelineContainer.appendChild(timeline);
             details.appendChild(timelineContainer);
+        } else {
+             // If no history, show a message
+            const noHistory = document.createElement('div');
+            noHistory.className = 'detail-row no-history';
+            noHistory.textContent = 'No event history recorded yet.';
+            details.appendChild(noHistory);
         }
         
-        // Add recent messages if available (legacy)
+        // Add recent messages if available (legacy) - Keep for now, might remove later
         if (user.mostRecentlySaidThings && user.mostRecentlySaidThings.length > 0) {
             const messagesContainer = document.createElement('div');
             messagesContainer.className = 'detail-row';
@@ -607,6 +619,16 @@ function updateUsersUI() {
         });
     });
 }
+
+// Placeholder function to show the full event timeline (e.g., in a modal)
+function showFullEventTimeline(user) {
+    // TODO: Implement a modal or dedicated view for the full timeline
+    console.log(`Showing full timeline for ${user.username}:`, user.eventHistory);
+    alert(`Full timeline for ${user.username} (See console for details):\n` + 
+          user.eventHistory.slice(0, 20).map(e => `${new Date(e.timestamp).toLocaleString()}: ${e.type}`).join('\n') +
+          (user.eventHistory.length > 20 ? '\n...' : ''));
+}
+
 // Fetch broadcaster profile information
 async function fetchBroadcasterProfile() {
     if (!configState.config.broadcasterName) return;
@@ -626,4 +648,84 @@ async function fetchBroadcasterProfile() {
     } catch (error) {
         console.error('Error fetching broadcaster profile:', error);
     }
+}
+
+// Handle Token History CSV Import
+function handleImportTokenHistory() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.csv'; // Accept only CSV files
+
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+            return; // No file selected
+        }
+
+        if (file.type !== 'text/csv' && !file.name.toLowerCase().endsWith('.csv')) {
+            displayImportResult('Error: Please select a valid CSV file.', false);
+            return;
+        }
+
+        // Display processing message
+        displayImportResult('Processing CSV file...', 'info'); // Use 'info' class or similar for neutral message
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            const csvData = e.target.result;
+            try {
+                // Check if PapaParse is loaded
+                if (typeof Papa === 'undefined') {
+                    console.warn('PapaParse library not found. Using simple CSV parser (may be less reliable).');
+                    // The userManager method already includes a fallback, so we can proceed.
+                }
+                // Call the import method within a try-catch for unexpected errors
+                let result;
+                try {
+                    result = appState.userManager.importTokenHistory(csvData);
+                } catch (importError) {
+                    console.error('Unexpected error during token history import:', importError);
+                    displayImportResult(`Unexpected error during import: ${importError.message}`, 'error');
+                    return; // Stop further processing
+                }
+
+                // Display the result message from the import method
+                displayImportResult(result.message, result.success ? 'success' : 'error');
+                
+                if (result.success) {
+                    updateUsersUI(); // Refresh user list after successful import
+                }
+                
+            } catch (error) { // Catch errors from PapaParse or initial processing
+                console.error('Error processing token history CSV:', error);
+                displayImportResult(`Error processing file: ${error.message}`, 'error');
+            }
+        };
+
+        reader.onerror = (e) => {
+            console.error('Error reading file:', e);
+            displayImportResult('Error reading the selected file.', false);
+        };
+
+        reader.readAsText(file); // Read the file as text
+    });
+
+    fileInput.click(); // Trigger the file selection dialog
+}
+
+// Helper function to display import/export results
+function displayImportResult(message, type = 'info') { // type can be 'success', 'error', 'info'
+    if (!dataManagementResult) return;
+    dataManagementResult.textContent = message;
+    dataManagementResult.className = `result-box ${type}`; // Use type for class
+    // Keep the message visible for a while, unless it's just 'info'
+    if (type !== 'info') {
+        setTimeout(() => {
+            dataManagementResult.classList.add('hidden');
+        }, 10000); // Hide after 10 seconds for success/error
+    } else {
+        // Info messages don't auto-hide, they get replaced by success/error
+        dataManagementResult.classList.remove('hidden');
+    } 
 }
