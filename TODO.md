@@ -1,5 +1,24 @@
 # Broadcasting Coach TODO List
 
+## Immediate
+
+Things to do right away.
+
+1. Refactor the database storage into stand alone helper functions so it will be easy to swap out to a different database. for boardcastCoachUsers, as localstorage is not big enough.
+
+2. When over quota and have to throw away some users, throw away ones with least tips in total.
+
+3. Sort user list with online first, offline second.  Within each group sort by total tokens tipped, most tokens at the top.
+
+4. In user event history show a full date time, not just time, if it is not today.
+
+5. In event history for a user if they purchased media or otherwise spent tokens then show that, don't call it "tip" for everything
+
+6. The "View all nnn events" is lame and needs instead to be a "load more" that does what it says.
+
+7. After importing token history many users have a sensible Token Stats fields, but with a "Total Tips" showing as zero. This is wrong obviously and needs investing why and correcting.
+
+
 ## High Priority
 
 1. **Fix CryptoJS Integration**

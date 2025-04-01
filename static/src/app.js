@@ -25,6 +25,8 @@ let connectionStatus;
 let lastPromptTime;
 let usersSection;
 let userList;
+let importTokenHistoryBtn;
+let dataManagementResult;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,12 +37,16 @@ document.addEventListener('DOMContentLoaded', () => {
     audioEnabled = document.getElementById('audioEnabled');
     connectionStatus = document.getElementById('connectionStatus');
     lastPromptTime = document.getElementById('lastPromptTime');
+    importTokenHistoryBtn = document.getElementById('importTokenHistory');
+    dataManagementResult = document.getElementById('dataManagementResult');
+
     // Initialize modules
     initConfig();
     initQRScanner(connectToEventAPI);
 
     // Add event listeners
     disconnectBtn.addEventListener('click', disconnectFromEventAPI);
+    importTokenHistoryBtn.addEventListener('click', handleImportTokenHistory);
 
     // Add event listener for audio enable toggle
     audioEnabled.addEventListener('change', () => {
@@ -492,9 +498,94 @@ function updateUsersUI() {
                     <span>${user.numberOfPrivateShowsTaken}</span>
                 </div>
             ` : ''}
+            <div class="detail-row">
+                <label>Token Stats:</label>
+                <div class="token-stats">
+                    <span>Total: ${user.tokenStats.totalSpent || 0}</span>
+                    <span>7d: ${user.tokenStats.timePeriods.day7.tips || 0}</span>
+                    <span>30d: ${user.tokenStats.timePeriods.day30.tips || 0}</span>
+                </div>
+            </div>
         `;
         
-        // Add recent messages if available
+        // Add event timeline if available
+        if (user.eventHistory && user.eventHistory.length > 0) {
+            const timelineContainer = document.createElement('div');
+            timelineContainer.className = 'detail-row';
+            
+            const label = document.createElement('label');
+            label.textContent = 'Recent Activity:';
+            
+            const timeline = document.createElement('div');
+            timeline.className = 'event-timeline';
+            
+            // Show most recent 5 events
+            user.eventHistory.slice(0, 5).forEach(event => {
+                const eventItem = document.createElement('div');
+                eventItem.className = `event-item ${event.type}`;
+                
+                const eventTime = document.createElement('span');
+                eventTime.className = 'event-time';
+                eventTime.textContent = new Date(event.timestamp).toLocaleTimeString();
+                
+                const eventContent = document.createElement('span');
+                eventContent.className = 'event-content';
+                
+                // Format event content based on type
+                switch(event.type) {
+                    case 'tip':
+                        eventContent.textContent = `Tipped ${event.data.amount} tokens`;
+                        if (event.data.note) {
+                            eventContent.textContent += `: ${event.data.note}`;
+                        }
+                        break;
+                    case 'chatMessage':
+                        eventContent.textContent = `Said: ${event.data.content}`;
+                        break;
+                    case 'privateMessage':
+                        eventContent.textContent = `Private: ${event.data.content}`;
+                        break;
+                    case 'privateShow':
+                        eventContent.textContent = `Private show (${event.data.duration}s, ${event.data.tokens}t)`;
+                        break;
+                    case 'privateShowSpy':
+                        eventContent.textContent = `Spy show (${event.data.duration}s, ${event.data.tokens}t)`;
+                        break;
+                    case 'mediaPurchase':
+                        eventContent.textContent = `Bought ${event.data.item}`;
+                        break;
+                    default:
+                        eventContent.textContent = `${event.type}`;
+                }
+                
+                eventItem.appendChild(eventTime);
+                eventItem.appendChild(eventContent);
+                timeline.appendChild(eventItem);
+            });
+            
+            // Add "View All" button if there are more events
+            if (user.eventHistory.length > 5) {
+                const viewAllBtn = document.createElement('button');
+                viewAllBtn.className = 'view-all-events';
+                viewAllBtn.textContent = `View all ${user.eventHistory.length} events`;
+                viewAllBtn.addEventListener('click', () => {
+                    showFullEventTimeline(user);
+                });
+                timeline.appendChild(viewAllBtn);
+            }
+            
+            timelineContainer.appendChild(label);
+            timelineContainer.appendChild(timeline);
+            details.appendChild(timelineContainer);
+        } else {
+             // If no history, show a message
+            const noHistory = document.createElement('div');
+            noHistory.className = 'detail-row no-history';
+            noHistory.textContent = 'No event history recorded yet.';
+            details.appendChild(noHistory);
+        }
+        
+        // Add recent messages if available (legacy) - Keep for now, might remove later
         if (user.mostRecentlySaidThings && user.mostRecentlySaidThings.length > 0) {
             const messagesContainer = document.createElement('div');
             messagesContainer.className = 'detail-row';
@@ -528,6 +619,16 @@ function updateUsersUI() {
         });
     });
 }
+
+// Placeholder function to show the full event timeline (e.g., in a modal)
+function showFullEventTimeline(user) {
+    // TODO: Implement a modal or dedicated view for the full timeline
+    console.log(`Showing full timeline for ${user.username}:`, user.eventHistory);
+    alert(`Full timeline for ${user.username} (See console for details):\n` + 
+          user.eventHistory.slice(0, 20).map(e => `${new Date(e.timestamp).toLocaleString()}: ${e.type}`).join('\n') +
+          (user.eventHistory.length > 20 ? '\n...' : ''));
+}
+
 // Fetch broadcaster profile information
 async function fetchBroadcasterProfile() {
     if (!configState.config.broadcasterName) return;
@@ -547,4 +648,84 @@ async function fetchBroadcasterProfile() {
     } catch (error) {
         console.error('Error fetching broadcaster profile:', error);
     }
+}
+
+// Handle Token History CSV Import
+function handleImportTokenHistory() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.csv'; // Accept only CSV files
+
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+            return; // No file selected
+        }
+
+        if (file.type !== 'text/csv' && !file.name.toLowerCase().endsWith('.csv')) {
+            displayImportResult('Error: Please select a valid CSV file.', false);
+            return;
+        }
+
+        // Display processing message
+        displayImportResult('Processing CSV file...', 'info'); // Use 'info' class or similar for neutral message
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            const csvData = e.target.result;
+            try {
+                // Check if PapaParse is loaded
+                if (typeof Papa === 'undefined') {
+                    console.warn('PapaParse library not found. Using simple CSV parser (may be less reliable).');
+                    // The userManager method already includes a fallback, so we can proceed.
+                }
+                // Call the import method within a try-catch for unexpected errors
+                let result;
+                try {
+                    result = appState.userManager.importTokenHistory(csvData);
+                } catch (importError) {
+                    console.error('Unexpected error during token history import:', importError);
+                    displayImportResult(`Unexpected error during import: ${importError.message}`, 'error');
+                    return; // Stop further processing
+                }
+
+                // Display the result message from the import method
+                displayImportResult(result.message, result.success ? 'success' : 'error');
+                
+                if (result.success) {
+                    updateUsersUI(); // Refresh user list after successful import
+                }
+                
+            } catch (error) { // Catch errors from PapaParse or initial processing
+                console.error('Error processing token history CSV:', error);
+                displayImportResult(`Error processing file: ${error.message}`, 'error');
+            }
+        };
+
+        reader.onerror = (e) => {
+            console.error('Error reading file:', e);
+            displayImportResult('Error reading the selected file.', false);
+        };
+
+        reader.readAsText(file); // Read the file as text
+    });
+
+    fileInput.click(); // Trigger the file selection dialog
+}
+
+// Helper function to display import/export results
+function displayImportResult(message, type = 'info') { // type can be 'success', 'error', 'info'
+    if (!dataManagementResult) return;
+    dataManagementResult.textContent = message;
+    dataManagementResult.className = `result-box ${type}`; // Use type for class
+    // Keep the message visible for a while, unless it's just 'info'
+    if (type !== 'info') {
+        setTimeout(() => {
+            dataManagementResult.classList.add('hidden');
+        }, 10000); // Hide after 10 seconds for success/error
+    } else {
+        // Info messages don't auto-hide, they get replaced by success/error
+        dataManagementResult.classList.remove('hidden');
+    } 
 }

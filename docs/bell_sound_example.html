@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-color: white; /* Ensure the iframe has a white background */
+        }
+
+        
+    </style>
+</head>
+<body>
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ring a Bell</title>
+<style>
+body {
+font-family: Arial, sans-serif;
+text-align: center;
+margin-top: 50px;
+}
+button {
+padding: 15px 30px;
+font-size: 18px;
+cursor: pointer;
+border: none;
+border-radius: 5px;
+background-color: #007BFF;
+color: white;
+transition: background-color 0.3s ease;
+}
+button:hover {
+background-color: #0056b3;
+}
+</style>
+</head>
+<body>
+<h1>Click the Button to Ring the Bell</h1>
+<button id="ringBellButton">🔔 Ring the Bell</button>
+
+<script>
+// Create an AudioContext
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+// Function to generate a bell-like sound
+function ringBell() {
+// Create an oscillator node for the main tone
+const oscillator = audioContext.createOscillator();
+oscillator.type = 'triangle'; // Triangle wave mimics a bell-like tone
+oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
+
+// Add a gain node to control volume and apply decay
+const gainNode = audioContext.createGain();
+gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // Start with medium volume
+gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2); // Decay over 2 seconds
+
+// Connect the oscillator to the gain node and then to the destination (speakers)
+oscillator.connect(gainNode);
+gainNode.connect(audioContext.destination);
+
+// Start the oscillator
+oscillator.start();
+
+// Stop the oscillator after 2 seconds
+oscillator.stop(audioContext.currentTime + 2);
+}
+
+// Select the button and add a click event listener
+const ringBellButton = document.getElementById('ringBellButton');
+ringBellButton.addEventListener('click', ringBell);
+</script>
+</body>
+</html>
+
+
+
+    <script>
+        
+    </script>
+</body>
+</html>
