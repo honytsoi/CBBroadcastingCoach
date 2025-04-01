@@ -55,7 +55,7 @@ const DEFAULT_MODEL = AI_MODELS[0].id;
 const APPROVED_MODELS = AI_MODELS.map(model => model.id);
 
 // Export all configurations
-module.exports = {
+export const models = {
     AI_MODELS,
     DEFAULT_MODEL,
     APPROVED_MODELS

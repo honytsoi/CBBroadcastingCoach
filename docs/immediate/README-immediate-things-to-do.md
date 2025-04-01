@@ -4,8 +4,7 @@ For every task, where possible, create a test framework that independantly tests
 
 1. Refactor Storage Logic
    - File: storage-refactor.md
-   - Status: Not Started
-
+   - Status: Completed
 2. Improve Quota Handling
    - File: quota-handling.md
    - Status: Not Started

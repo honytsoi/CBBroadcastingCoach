@@ -7,7 +7,8 @@
 - static/src/api/cloudflareWorker.js: API integration and session management
 - static/src/qr-scanner.js: QR code scanning functionality
 - static/src/data-manager.js: Data handling and persistence
-- static/src/user-manager.js: User tracking and management
+- static/src/user-manager.js: User tracking, event handling, and profile management (delegates storage)
+- static/src/storage-manager.js: Handles persistence of user data (e.g., localStorage)
 - static/styles/main.css: Main stylesheet
 
 ## Backend Files
@@ -76,10 +77,11 @@
    index.html → app.js → config.js → cloudflareWorker.js → Cloudflare Worker
 
 2. Event Handling:
-   qr-scanner.js → app.js → user-manager.js/data-manager.js
+   qr-scanner.js → app.js → user-manager.js → storage-manager.js (for user data persistence)
 
 3. Configuration:
-   config.js ↔ localStorage ↔ Cloudflare Worker
+   User Data Storage: user-manager.js → storage-manager.js ↔ localStorage
+   Config Storage: config.js ↔ localStorage ↔ Cloudflare Worker (config sync)
 
 ## Development Tools
 1. Local Testing:

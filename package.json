@@ -1,6 +1,7 @@
 {
 	"name": "broadcasting-coach",
 	"version": "1.0.0",
+	"type": "module",
 	"description": "Real-time coaching app",
 	"main": "src/index.js",
 	"scripts": {

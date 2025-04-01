@@ -1,13 +1,15 @@
 # Test Documentation
 
-This document describes the tests implemented in `test.js` and outlines the scope of testing, including what is covered and what is not.
+This document describes the unit tests implemented in the `tests/` directory and outlines the scope of testing, including what is covered and what is not.
 
 ## Overview
 
-The tests in `test.js` use the `jest` testing framework to verify the functionality of the following modules:
+The unit tests use the built-in `node:test` runner to verify the functionality of the following modules:
 
--   `static/src/api/cloudflareWorker.js`
--   `static/src/config.js`
+-   `static/src/api/cloudflareWorker.js` (Note: Currently untested, `test.js` seems to cover this but uses Jest - needs consolidation)
+-   `static/src/config.js` (Note: Currently untested, `test.js` seems to cover this but uses Jest - needs consolidation)
+-   `static/src/storage-manager.js` (Covered in `tests/storage-manager.test.js`)
+-   `static/src/user-manager.js` (Partially covered in `tests/user-manager.test.js`)
 
 ## Tested Functionality
 
@@ -17,9 +19,17 @@ The following functionality is covered by the tests:
     -   `getSessionKey`: Verifies that the function returns a valid session key and expiration time.
     -   `generateCoachingPrompt`: Verifies that the function generates a prompt successfully.
     -   `getAvailableModels`: Verifies that the function returns a list of available AI models.
--   **`static/src/config.js`:**
-    -   `loadConfig`: Verifies that the function loads the configuration from localStorage correctly.
-    -   `saveConfig`: Verifies that the function saves the configuration to localStorage correctly.
+-   **`static/src/config.js`:** (Tests likely exist in `test.js` but need migration to `node:test`)
+    -   `loadConfig`: Verifies loading configuration from localStorage.
+    -   `saveConfig`: Verifies saving configuration to localStorage.
+-   **`static/src/storage-manager.js` (`tests/storage-manager.test.js`):**
+    -   `saveUserData`: Verifies saving user data Map to localStorage, including handling chat history limits and quota errors.
+    -   `loadUserData`: Verifies loading and parsing user data from localStorage, handling missing or invalid data.
+    -   `handleQuotaError`: Verifies the logic for reducing the user map when storage quota is exceeded.
+-   **`static/src/user-manager.js` (`tests/user-manager.test.js`):**
+    -   `importTokenHistory`: Verifies parsing of token history CSV data, creation of user events (including tips and private show meta-events), and handling of duplicates.
+    -   `loadUsers` (Interaction): Verifies that it correctly calls `storageManager.loadUserData` and processes the returned map (merging defaults, resetting online status).
+    -   `saveUsers` (Interaction): Verifies that it correctly calls `storageManager.saveUserData` and handles potential errors (including quota errors by calling `storageManager.handleQuotaError` and retrying).
 
 ## Untested Functionality
 
@@ -42,7 +52,9 @@ The following objects and functions are mocked in the tests:
 -   `fetch`: Mocked to simulate API calls.
 -   `initConfig`: Mocked to prevent the function from trying to access the DOM.
 -   `loadConfig`: Mocked to prevent the function from trying to access the DOM.
--   `saveConfig`: Mocked to prevent the function from trying to access the DOM.
+-   `saveConfig`: Mocked to prevent the function from trying to access the DOM (in `test.js`).
+-   `static/src/storage-manager.js`: Functions (`saveUserData`, `loadUserData`, `handleQuotaError`) are mocked within `tests/user-manager.test.js` to isolate `UserManager` logic.
+-   `static/src/displayError.js`: The `displayError` function is mocked within `tests/user-manager.test.js` to prevent side effects during error handling tests.
 
 ## Limitations
 

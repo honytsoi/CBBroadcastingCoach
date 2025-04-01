@@ -2,6 +2,7 @@
 // Tracks users and their interactions in the broadcast
 import { validateImportData, createBackup, isFileSizeValid, mergeUsers } from './data-manager.js';
 import { displayError } from './displayError.js';
+import { saveUserData, loadUserData, handleQuotaError } from './storage-manager.js';
 export class UserManager {
     constructor() {
         this.users = new Map();
@@ -170,56 +171,60 @@ export class UserManager {
         this.saveDebounceTimeout = setTimeout(() => this.saveUsers(), 1000);
     }
 
-    // Save all users to localStorage
+    // Save all users using the storage manager
     saveUsers() {
         try {
-            const usersArray = Array.from(this.users).map(([key, value]) => {
-                return [key, {
-                    ...value,
-                    // Ensure we don't store too many messages per user
-                    mostRecentlySaidThings: value.mostRecentlySaidThings.slice(0, this.maxChatHistory)
-                }];
-            });
-            localStorage.setItem('broadcastCoachUsers', JSON.stringify(usersArray));
+            // Delegate saving logic to storage-manager
+            saveUserData(this.users);
         } catch (error) {
-            console.error('Error saving users:', error);
-            this.handleStorageError(error);
+            console.error('Error saving users via storage manager:', error);
+            // Check if it's a quota error and handle it
+            if (error.name === 'QuotaExceededError' || (error.message && error.message.toLowerCase().includes('quota'))) {
+                try {
+                    console.warn('Attempting quota error handling...');
+                    const reducedUsersMap = handleQuotaError(this.users);
+                    // Assign the reduced map back to this.users
+                    this.users = reducedUsersMap;
+                    // Attempt to save the reduced map
+                    console.log('Retrying save after quota handling...');
+                    saveUserData(this.users);
+                    console.log('Successfully saved reduced user data after quota error.');
+                } catch (retryError) {
+                    console.error('Failed to save even after handling quota error:', retryError);
+                    // Optionally display a persistent error to the user here
+                    displayError(new Error("Failed to save user data due to storage limits, even after cleanup. Some data might be lost."));
+                }
+            } else {
+                // Handle other potential save errors
+                 displayError(new Error(`An unexpected error occurred while saving user data: ${error.message}`));
+            }
         }
     }
 
-    // Handle localStorage errors
-    handleStorageError(error) {
-        if (error.name === 'QuotaExceededError') {
-            // Implement cleanup strategy - remove half of the least recently seen users
-            console.log("Quota exceeded, throwing away half the users")
-            const sortedUsers = Array.from(this.users.entries())
-                .sort((a, b) => new Date(a[1].lastSeenDate) - new Date(b[1].lastSeenDate));
+    // Removed handleStorageError method - logic moved to storage-manager.js and saveUsers catch block
 
-            const usersToKeep = sortedUsers.slice(Math.floor(sortedUsers.length / 2));
-            this.users = new Map(usersToKeep);
-            this.saveUsers();
-        }
-    }
-
-    // Load users from localStorage
+    // Load users using the storage manager
     loadUsers() {
         try {
-            const storedUsers = localStorage.getItem('broadcastCoachUsers');
-            if (storedUsers) {
-                const parsedUsers = JSON.parse(storedUsers);
-                this.users = new Map(parsedUsers.map(([key, value]) => {
-                    // Ensure all fields exist with proper defaults
-                    return [key, {
-                        ...this.getDefaultUser(key),
-                        ...value,
-                        // Reset online status on load
-                        isOnline: false
-                    }];
-                }));
+            // Delegate loading logic to storage-manager
+            const loadedMap = loadUserData();
+
+            // Process the loaded map: merge with defaults and reset online status
+            const processedUsers = new Map();
+            for (const [key, value] of loadedMap.entries()) {
+                 processedUsers.set(key, {
+                    ...this.getDefaultUser(key), // Apply defaults first
+                    ...value,                   // Override with loaded data
+                    isOnline: false             // Ensure online status is reset
+                });
             }
+            this.users = processedUsers;
+
         } catch (error) {
-            console.error('Error loading users:', error);
-            this.users = new Map();
+            // loadUserData already logs errors, but we catch any unexpected issues here
+            console.error('Critical error during user loading process:', error);
+            this.users = new Map(); // Ensure users is a valid Map on failure
+            displayError(new Error("Failed to load user data. Starting with a clean slate."));
         }
     }
 
