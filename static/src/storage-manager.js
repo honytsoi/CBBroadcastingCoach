@@ -60,15 +60,14 @@ export function loadUserData() {
  * @returns {Map<string, object>} A potentially smaller Map after removing some users.
  */
 export function handleQuotaError(usersMap) {
-  console.warn("Storage quota exceeded. Attempting to clear older user data...");
+  console.warn("Storage quota exceeded. Attempting to clear users with lowest token spend...");
   try {
-    // Implement cleanup strategy - remove half of the least recently seen users
+    // Implement cleanup strategy - remove half of the users with the lowest token spend
     const sortedUsers = Array.from(usersMap.entries())
       .sort(([, userA], [, userB]) => {
-        // Handle cases where lastSeenDate might be null or invalid
-        const dateA = userA.lastSeenDate ? new Date(userA.lastSeenDate) : new Date(0);
-        const dateB = userB.lastSeenDate ? new Date(userB.lastSeenDate) : new Date(0);
-        return dateA - dateB; // Sorts oldest first
+        const aTotalSpent = userA.tokenStats?.totalSpent ?? 0;
+        const bTotalSpent = userB.tokenStats?.totalSpent ?? 0;
+        return aTotalSpent - bTotalSpent; // Sorts lowest token spend first
       });
 
     const usersToKeepCount = Math.ceil(sortedUsers.length / 2); // Keep slightly more than half if odd
