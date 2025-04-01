@@ -7,11 +7,11 @@ For every task, where possible, create a test framework that independantly tests
    - Status: Completed
 2. Improve Quota Handling
    - File: quota-handling.md
-   - Status: Not Started
+   - Status: Completed
 
 3. Enhance User List Sorting
    - File: user-list-sorting.md
-   - Status: Not Started
+   - Status: Completed
 
 4. Refine Event History Timestamps
    - File: event-timestamps.md

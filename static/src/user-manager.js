@@ -66,15 +66,15 @@ export class UserManager {
         return this.users.get(username);
     }
 
-    // Get all users, sorted by online status and then last seen date
+    // Get all users, sorted by online status and then total tokens spent
     getAllUsers() {
         return Array.from(this.users.values()).sort((a, b) => {
             // Online users first
             if (a.isOnline && !b.isOnline) return -1;
             if (!a.isOnline && b.isOnline) return 1;
 
-            // Then sort by last seen date (most recent first)
-            return new Date(b.lastSeenDate) - new Date(a.lastSeenDate);
+            // Then sort by total tokens spent (highest first)
+            return (b.tokenStats?.totalSpent ?? 0) - (a.tokenStats?.totalSpent ?? 0);
         });
     }
 
