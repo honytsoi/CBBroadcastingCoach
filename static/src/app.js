@@ -400,6 +400,29 @@ function setupUsersSection() {
 }
 
 
+/**
+ * Format event timestamp.
+ * If event occurred today, returns time; otherwise returns date and time.
+ */
+function formatEventTimestamp(isoTimestampString) {
+    const eventDate = new Date(isoTimestampString);
+    const now = new Date();
+    if (eventDate.toDateString() === now.toDateString()) {
+        return eventDate.toLocaleTimeString();
+    } else {
+        const year = eventDate.getFullYear();
+        const month = String(eventDate.getMonth() + 1).padStart(2, '0');
+        const day = String(eventDate.getDate()).padStart(2, '0');
+        const hours = String(eventDate.getHours()).padStart(2, '0');
+        const minutes = String(eventDate.getMinutes()).padStart(2, '0');
+        const seconds = String(eventDate.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+}
+
+const INITIAL_EVENTS_TO_SHOW = 5;
+const EVENTS_PER_LOAD = 20;
+
 // Update the user interface with current user information
 function updateUsersUI() {
     if (!userList) return;
@@ -519,60 +542,10 @@ function updateUsersUI() {
             const timeline = document.createElement('div');
             timeline.className = 'event-timeline';
             
-            // Show most recent 5 events
-            user.eventHistory.slice(0, 5).forEach(event => {
-                const eventItem = document.createElement('div');
-                eventItem.className = `event-item ${event.type}`;
-                
-                const eventTime = document.createElement('span');
-                eventTime.className = 'event-time';
-                eventTime.textContent = new Date(event.timestamp).toLocaleTimeString();
-                
-                const eventContent = document.createElement('span');
-                eventContent.className = 'event-content';
-                
-                // Format event content based on type
-                switch(event.type) {
-                    case 'tip':
-                        eventContent.textContent = `Tipped ${event.data.amount} tokens`;
-                        if (event.data.note) {
-                            eventContent.textContent += `: ${event.data.note}`;
-                        }
-                        break;
-                    case 'chatMessage':
-                        eventContent.textContent = `Said: ${event.data.content}`;
-                        break;
-                    case 'privateMessage':
-                        eventContent.textContent = `Private: ${event.data.content}`;
-                        break;
-                    case 'privateShow':
-                        eventContent.textContent = `Private show (${event.data.duration}s, ${event.data.tokens}t)`;
-                        break;
-                    case 'privateShowSpy':
-                        eventContent.textContent = `Spy show (${event.data.duration}s, ${event.data.tokens}t)`;
-                        break;
-                    case 'mediaPurchase':
-                        eventContent.textContent = `Bought ${event.data.item}`;
-                        break;
-                    default:
-                        eventContent.textContent = `${event.type}`;
-                }
-                
-                eventItem.appendChild(eventTime);
-                eventItem.appendChild(eventContent);
-                timeline.appendChild(eventItem);
-            });
-            
-            // Add "View All" button if there are more events
-            if (user.eventHistory.length > 5) {
-                const viewAllBtn = document.createElement('button');
-                viewAllBtn.className = 'view-all-events';
-                viewAllBtn.textContent = `View all ${user.eventHistory.length} events`;
-                viewAllBtn.addEventListener('click', () => {
-                    showFullEventTimeline(user);
-                });
-                timeline.appendChild(viewAllBtn);
-            }
+            // Paginate events: show initial batch and add "Load More" button if needed
+            const initialRendered = renderEventBatch(user, timeline, 0, INITIAL_EVENTS_TO_SHOW);
+            timeline.dataset.shownEvents = initialRendered;
+            addLoadMoreButtonIfNeeded(user, timeline);
             
             timelineContainer.appendChild(label);
             timelineContainer.appendChild(timeline);
@@ -620,13 +593,64 @@ function updateUsersUI() {
     });
 }
 
-// Placeholder function to show the full event timeline (e.g., in a modal)
-function showFullEventTimeline(user) {
-    // TODO: Implement a modal or dedicated view for the full timeline
-    console.log(`Showing full timeline for ${user.username}:`, user.eventHistory);
-    alert(`Full timeline for ${user.username} (See console for details):\n` + 
-          user.eventHistory.slice(0, 20).map(e => `${new Date(e.timestamp).toLocaleString()}: ${e.type}`).join('\n') +
-          (user.eventHistory.length > 20 ? '\n...' : ''));
+function createEventElement(event) {
+    const eventItem = document.createElement('div');
+    if (event.type) {
+        switch (event.type) {
+            case 'tip':
+                eventItem.textContent = (event.data && event.data.note) ?
+                    `Tip: ${event.data.amount} tokens - ${event.data.note}` :
+                    `Tip: ${event.data.amount} tokens`;
+                break;
+            case 'chatMessage':
+                eventItem.textContent = `Said: ${event.data.content}`;
+                break;
+            case 'privateMessage':
+                eventItem.textContent = `Private: ${event.data.content}`;
+                break;
+            case 'privateShow':
+                eventItem.textContent = `Private Show (${event.data.duration}s, ${event.data.tokens} tokens)`;
+                break;
+            case 'privateShowSpy':
+                eventItem.textContent = `Spy Show (${event.data.duration}s, ${event.data.tokens} tokens)`;
+                break;
+            case 'mediaPurchase':
+                eventItem.textContent = `Media Purchase: ${event.data.item} (${event.data.amount} tokens)`;
+                break;
+            default:
+                eventItem.textContent = `${event.type}`;
+        }
+    } else {
+        eventItem.textContent = "Event";
+    }
+    return eventItem;
+}
+
+function renderEventBatch(user, timelineElement, startIndex, count) {
+    const events = user.eventHistory.slice(startIndex, startIndex + count);
+    events.forEach(event => {
+        const eventItem = createEventElement(event);
+        timelineElement.appendChild(eventItem);
+    });
+    return events.length;
+}
+
+function addLoadMoreButtonIfNeeded(user, timelineElement) {
+    const shownCount = parseInt(timelineElement.dataset.shownEvents || '0', 10);
+    const totalCount = user.eventHistory.length;
+    if (shownCount < totalCount) {
+        const loadMoreBtn = document.createElement('button');
+        loadMoreBtn.textContent = `Load More (${totalCount - shownCount} remaining)`;
+        loadMoreBtn.className = 'load-more-events';
+        loadMoreBtn.addEventListener('click', () => {
+            const currentShown = parseInt(timelineElement.dataset.shownEvents || '0', 10);
+            const renderedCount = renderEventBatch(user, timelineElement, currentShown, EVENTS_PER_LOAD);
+            timelineElement.dataset.shownEvents = currentShown + renderedCount;
+            loadMoreBtn.remove();
+            addLoadMoreButtonIfNeeded(user, timelineElement);
+        });
+        timelineElement.appendChild(loadMoreBtn);
+    }
 }
 
 // Fetch broadcaster profile information

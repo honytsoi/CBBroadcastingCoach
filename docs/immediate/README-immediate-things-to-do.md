@@ -15,16 +15,16 @@ For every task, where possible, create a test framework that independantly tests
 
 4. Refine Event History Timestamps
    - File: event-timestamps.md
-   - Status: Not Started
+   - Status: Done - but needs to be checked.
 
 5. Clarify Event History Labels
    - File: event-labels.md
-   - Status: Not Started
+   - Status: Completed
 
 6. Implement "Load More" for Events
    - File: load-more-events.md
-   - Status: Not Started
+   - Status: Completed
 
 7. Fix Post-Import Token Stats Calculation
    - File: token-stats-fix.md
-   - Status: Not Started
+   - Status: Completed

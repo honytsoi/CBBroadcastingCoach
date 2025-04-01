@@ -741,7 +741,15 @@ export class UserManager {
                 // Accumulate token count for the final message
                 addedTokensCount += eventData.data.amount || 0; // Use amount from original data
             }
-
+            console.log(`Recalculating totals for ${importedUsers.size} users affected by import...`);
+            for (const username of importedUsers) {
+                const user = this.getUser(username);
+                if (user) {
+                    this.recalculateTotals(user);
+                }
+            }
+            console.log('Finished recalculating totals.');
+            
             // Final result message
             const finalTokenCount = addedTokensCount;
             const finalUserCount = importedUsers.size;
